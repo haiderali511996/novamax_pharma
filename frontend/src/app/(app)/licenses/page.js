@@ -23,7 +23,7 @@ const fields = [
   { name: 'issuingAuthority', label: 'Issuing Authority' },
   { name: 'issueDate', label: 'Issue Date', type: 'date' },
   { name: 'expiryDate', label: 'Expiry Date', type: 'date', required: true },
-  { name: 'documentUrl', label: 'Document URL' },
+  { name: 'documentUrl', label: 'Document (PDF or image)', type: 'file-upload' },
   { name: 'status', label: 'Status', type: 'select', options: ['active', 'expired', 'renewal_pending'] },
   { name: 'notes', label: 'Notes', type: 'textarea' },
 ];

@@ -32,6 +32,27 @@ export async function apiFetch(path, { method = 'GET', body, params } = {}) {
   return data;
 }
 
+// File uploads bypass apiFetch's JSON body handling - multipart requests
+// must not set a Content-Type header themselves (the browser adds the
+// boundary), and the body is FormData, not a JSON-serializable object.
+export async function uploadFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const token = getToken();
+
+  const res = await fetch(`${API_URL}/uploads`, {
+    method: 'POST',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || `Upload failed with status ${res.status}`);
+  }
+  return data;
+}
+
 export const api = {
   get: (path, params) => apiFetch(path, { method: 'GET', params }),
   post: (path, body) => apiFetch(path, { method: 'POST', body }),

@@ -27,7 +27,7 @@ const fields = [
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'date', label: 'Date', type: 'date' },
   { name: 'description', label: 'Description', type: 'textarea' },
-  { name: 'receiptUrl', label: 'Receipt URL' },
+  { name: 'receiptUrl', label: 'Receipt (photo or PDF)', type: 'file-upload' },
 ];
 
 function ApproveRejectButtons({ item, reload, setError }) {

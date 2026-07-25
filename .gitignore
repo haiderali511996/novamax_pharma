@@ -11,6 +11,8 @@ frontend/next-env.d.ts
 
 # Backend
 backend/dist/
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 # OS
 .DS_Store

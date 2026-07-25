@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import LineItemsEditor from './LineItemsEditor';
 import ReturnItemsEditor from './ReturnItemsEditor';
 import { exportToCSV } from '@/lib/csv';
+import FileUploadField from './FileUploadField';
 
 function getNested(obj, path) {
   return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
@@ -100,6 +101,9 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   }
   if (field.type === 'multiselect-async') {
     return <MultiSelectAsyncField field={field} value={value} onChange={onChange} />;
+  }
+  if (field.type === 'file-upload') {
+    return <FileUploadField field={field} value={value} onChange={onChange} />;
   }
   if (field.type === 'select-async') {
     return <AsyncSelectField field={field} value={value} onChange={onChange} formData={formData} />;

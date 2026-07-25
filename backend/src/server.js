@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -38,6 +39,7 @@ const fieldVisitRoutes = require('./routes/fieldVisitRoutes');
 const salesTargetRoutes = require('./routes/salesTargetRoutes');
 const expenseClaimRoutes = require('./routes/expenseClaimRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 
@@ -49,6 +51,18 @@ app.use(express.json());
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'NovaMax ERP API is running' }));
+
+// Uploaded license documents / expense receipts. Cross-Origin-Resource-Policy
+// is relaxed just for this path so the frontend (a different origin) can
+// embed/preview them, e.g. images inline instead of only opening in a new tab.
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  },
+  express.static(path.join(__dirname, '..', 'uploads'))
+);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -81,6 +95,7 @@ app.use('/api/field-visits', fieldVisitRoutes);
 app.use('/api/sales-targets', salesTargetRoutes);
 app.use('/api/expense-claims', expenseClaimRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
