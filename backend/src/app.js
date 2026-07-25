@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
@@ -50,6 +51,20 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(express.json());
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
+
+// General defense-in-depth ceiling on the whole API; auth routes carry a
+// much tighter limit of their own (see routes/authRoutes.js).
+if (process.env.NODE_ENV !== 'test') {
+  app.use(
+    '/api',
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 1000,
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
+  );
+}
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'NovaMax ERP API is running' }));
 

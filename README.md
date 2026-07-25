@@ -15,8 +15,10 @@ Internal ERP system for NovaMax Pharmaceutical, built with Next.js, Node.js/Expr
 - **Finance**: Chart of accounts, transactions, expenses (Salaries, Running Expense, Office Expense, Promotional Material, Other)
 - **Ledgers**: Running-balance account statements per Customer, Distributor, Manufacturer, and Employee, plus a categorized Expense register. Customer/distributor invoices, paid payroll, approved returns, and reimbursed expense claims all auto-post ledger entries; everything else is entered manually
 - **Reports**: Stock valuation, aged receivables, aged payables, sales by territory, and a monthly profit & loss — every list and report can export to CSV
-- **Compliance**: Drug licenses, GMP certificates and other regulatory documents with renewal alerts
-- **Notifications**: Automatic intimation to the Sales team when a customer or distributor invoice has been unpaid for 30+ days (background scan every 6 hours, plus a manual "Run Scan Now" for admins/managers)
+- **Compliance**: Drug licenses (with real file uploads for the actual document), GMP certificates and other regulatory documents with renewal alerts
+- **Notifications**: Automatic intimation to the Sales team — in-app and by email — when a customer or distributor invoice has been unpaid for 30+ days (background scan every 6 hours, plus a manual "Run Scan Now" for admins/managers)
+- **Printable invoices**: Browser print-to-PDF views for both customer and distributor invoices, itemized when line items exist
+- **Audit log**: Every create/update/delete across the system, plus key workflow actions (confirm, receive, approve, reject), with before/after snapshots — admin only
 
 ## Roles
 
@@ -36,7 +38,21 @@ frontend/   Next.js App Router UI (Tailwind CSS)
 - Node.js 20.9+
 - A running MongoDB instance (local or Atlas)
 
-### 1. Backend
+### Option A: Docker Compose (Mongo + backend + frontend together)
+
+```bash
+docker compose up --build
+```
+
+Frontend at http://localhost:3000, API at http://localhost:5000. Set `JWT_SECRET` (and optionally `SMTP_*`) in a `.env` file next to `docker-compose.yml`, or export them before running — see `docker-compose.yml` for the full list. Then seed the first admin user:
+
+```bash
+docker compose exec backend npm run seed
+```
+
+### Option B: Run each app directly
+
+#### 1. Backend
 
 ```bash
 cd backend
@@ -51,7 +67,7 @@ Default seeded admin credentials (override via `SEED_ADMIN_EMAIL` / `SEED_ADMIN_
 - Email: `admin@novamaxpharma.com`
 - Password: `Admin@123`
 
-### 2. Frontend
+#### 2. Frontend
 
 ```bash
 cd frontend
@@ -61,6 +77,20 @@ npm run dev              # starts the UI on http://localhost:3000
 ```
 
 Log in with the seeded admin account, then use the sidebar to manage each module. As `admin`, you can also create additional users with specific roles under **Administration → Users**.
+
+## Testing
+
+```bash
+cd backend
+npm test
+```
+
+Runs the full Jest + Supertest suite (42 tests across 11 files) against an isolated in-memory MongoDB per test file — no external database needed. A GitHub Actions workflow (`.github/workflows/ci.yml`) runs this plus the frontend build on every push/PR.
+
+## Security notes
+
+- Login/register are rate-limited (20 requests / 15 min / IP); the rest of the API carries a looser ceiling (1000 requests / 15 min / IP) as defense-in-depth
+- `helmet` is applied globally; CORS is open by default (`CLIENT_URL=*`) since auth is Bearer-token based, not cookie-based — tighten `CLIENT_URL` in production if desired
 
 ## API overview
 
