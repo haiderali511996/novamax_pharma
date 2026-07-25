@@ -2,6 +2,14 @@
 
 import ResourceManager from '@/components/ResourceManager';
 
+const STATUS_OPTIONS = [
+  { value: 'sale_based', label: 'Sale Based (nothing paid yet)' },
+  { value: 'partially_paid', label: 'Partially Paid' },
+  { value: 'fully_paid', label: 'Fully Paid' },
+];
+
+const STATUS_LABELS = { sale_based: 'Sale Based', partially_paid: 'Partially Paid', fully_paid: 'Fully Paid' };
+
 const columns = [
   { key: 'invoiceNumber', label: 'Invoice #' },
   { key: 'distributor.name', label: 'Distributor' },
@@ -9,7 +17,20 @@ const columns = [
   { key: 'invoiceDate', label: 'Invoice Date', render: (i) => new Date(i.invoiceDate).toLocaleDateString() },
   { key: 'amount', label: 'Amount', render: (i) => `$${i.amount}` },
   { key: 'amountPaid', label: 'Paid', render: (i) => `$${i.amountPaid}` },
-  { key: 'status', label: 'Status' },
+  {
+    key: 'status',
+    label: 'Status',
+    render: (i) => (
+      <span>
+        {i.isCancelled ? 'Cancelled' : STATUS_LABELS[i.status] || i.status}
+        {!i.isCancelled && i.isOverdue && (
+          <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700">
+            Overdue
+          </span>
+        )}
+      </span>
+    ),
+  },
   { key: 'dueDate', label: 'Due Date', render: (i) => new Date(i.dueDate).toLocaleDateString() },
 ];
 
@@ -30,12 +51,8 @@ const fields = [
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'amountPaid', label: 'Amount Paid', type: 'number' },
   { name: 'dueDate', label: 'Due Date', type: 'date', required: true },
-  {
-    name: 'status',
-    label: 'Status',
-    type: 'select',
-    options: ['unpaid', 'partially_paid', 'paid', 'overdue', 'cancelled'],
-  },
+  { name: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
+  { name: 'isCancelled', label: 'Cancelled', type: 'checkbox' },
   { name: 'notes', label: 'Notes', type: 'textarea' },
 ];
 

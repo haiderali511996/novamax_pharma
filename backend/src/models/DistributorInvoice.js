@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+// Same 3-type payment model as Invoice: sale_based (nothing paid),
+// partially_paid, fully_paid. Overdue is computed, not stored.
+const INVOICE_STATUSES = ['sale_based', 'partially_paid', 'fully_paid'];
+
 const distributorInvoiceSchema = new mongoose.Schema(
   {
     invoiceNumber: { type: String, required: true, unique: true, trim: true },
@@ -14,11 +18,19 @@ const distributorInvoiceSchema = new mongoose.Schema(
     amount: { type: Number, required: true, min: 0 },
     amountPaid: { type: Number, min: 0, default: 0 },
     dueDate: { type: Date, required: true },
-    status: { type: String, enum: ['unpaid', 'partially_paid', 'paid', 'overdue', 'cancelled'], default: 'unpaid' },
+    status: { type: String, enum: INVOICE_STATUSES, default: 'sale_based' },
+    isCancelled: { type: Boolean, default: false },
     notes: { type: String, trim: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );
 
+distributorInvoiceSchema.virtual('isOverdue').get(function isOverdue() {
+  return !this.isCancelled && this.status !== 'fully_paid' && this.dueDate < new Date();
+});
+
+distributorInvoiceSchema.set('toJSON', { virtuals: true });
+
 module.exports = mongoose.model('DistributorInvoice', distributorInvoiceSchema);
+module.exports.INVOICE_STATUSES = INVOICE_STATUSES;

@@ -43,7 +43,7 @@ const getSummary = asyncHandler(async (req, res) => {
     SalesOrder.countDocuments(),
     PurchaseOrder.countDocuments(),
     Employee.countDocuments({ status: 'active' }),
-    Invoice.countDocuments({ status: { $in: ['unpaid', 'partially_paid', 'overdue'] } }),
+    Invoice.countDocuments({ status: { $in: ['sale_based', 'partially_paid'] }, isCancelled: false }),
     Expense.aggregate([
       { $match: { date: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } },
       { $group: { _id: null, total: { $sum: '$amount' } } },

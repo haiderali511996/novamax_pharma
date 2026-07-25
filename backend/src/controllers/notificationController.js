@@ -4,7 +4,9 @@ const Invoice = require('../models/Invoice');
 const DistributorInvoice = require('../models/DistributorInvoice');
 
 const OVERDUE_DAYS = 30;
-const OPEN_STATUSES = ['unpaid', 'partially_paid', 'overdue'];
+// Not yet fully paid - i.e. still owed, regardless of whether nothing or
+// something has been paid so far.
+const OPEN_STATUSES = ['sale_based', 'partially_paid'];
 
 // Scans customer + distributor invoices for anything unpaid for 30+ days
 // past its due date and intimates the sales team via a Notification record.
@@ -15,8 +17,14 @@ async function scanOverdueInvoices() {
   cutoff.setDate(cutoff.getDate() - OVERDUE_DAYS);
 
   const [overdueCustomerInvoices, overdueDistributorInvoices] = await Promise.all([
-    Invoice.find({ status: { $in: OPEN_STATUSES }, dueDate: { $lte: cutoff } }).populate('customer', 'name phone email'),
-    DistributorInvoice.find({ status: { $in: OPEN_STATUSES }, dueDate: { $lte: cutoff } }).populate('distributor', 'name phone email'),
+    Invoice.find({ status: { $in: OPEN_STATUSES }, isCancelled: false, dueDate: { $lte: cutoff } }).populate(
+      'customer',
+      'name phone email'
+    ),
+    DistributorInvoice.find({ status: { $in: OPEN_STATUSES }, isCancelled: false, dueDate: { $lte: cutoff } }).populate(
+      'distributor',
+      'name phone email'
+    ),
   ]);
 
   let created = 0;
