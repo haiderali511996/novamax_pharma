@@ -2,6 +2,8 @@ const asyncHandler = require('express-async-handler');
 const Notification = require('../models/Notification');
 const Invoice = require('../models/Invoice');
 const DistributorInvoice = require('../models/DistributorInvoice');
+const User = require('../models/User');
+const { sendMail } = require('../utils/mailer');
 
 const OVERDUE_DAYS = 30;
 // Not yet fully paid - i.e. still owed, regardless of whether nothing or
@@ -28,9 +30,15 @@ async function scanOverdueInvoices() {
   ]);
 
   let created = 0;
+  const newlyCreated = []; // { title, message } - only for entries created this run, for the email digest
 
   for (const invoice of overdueCustomerInvoices) {
     const balance = invoice.amount - invoice.amountPaid;
+    const title = `Overdue invoice: ${invoice.invoiceNumber}`;
+    const message = `${invoice.customer?.name || 'Customer'} has an outstanding balance of $${balance.toFixed(
+      2
+    )} on invoice ${invoice.invoiceNumber}, overdue since ${invoice.dueDate.toDateString()}.`;
+
     const res = await Notification.updateOne(
       { type: 'overdue_customer_invoice', relatedId: invoice._id },
       {
@@ -39,20 +47,28 @@ async function scanOverdueInvoices() {
           relatedId: invoice._id,
           relatedModel: 'Invoice',
           targetRole: 'sales',
-          title: `Overdue invoice: ${invoice.invoiceNumber}`,
-          message: `${invoice.customer?.name || 'Customer'} has an outstanding balance of $${balance.toFixed(
-            2
-          )} on invoice ${invoice.invoiceNumber}, overdue since ${invoice.dueDate.toDateString()}.`,
+          title,
+          message,
           isRead: false,
         },
       },
       { upsert: true }
     );
-    if (res.upsertedCount) created += 1;
+    if (res.upsertedCount) {
+      created += 1;
+      newlyCreated.push({ title, message });
+    }
   }
 
   for (const invoice of overdueDistributorInvoices) {
     const balance = invoice.amount - invoice.amountPaid;
+    const title = `Overdue distributor invoice: ${invoice.invoiceNumber}`;
+    const message = `${invoice.distributor?.name || 'Distributor'}${
+      invoice.pharmacyName ? ` (billed to ${invoice.pharmacyName})` : ''
+    } has an outstanding balance of $${balance.toFixed(2)} on invoice ${
+      invoice.invoiceNumber
+    }, overdue since ${invoice.dueDate.toDateString()}.`;
+
     const res = await Notification.updateOne(
       { type: 'overdue_distributor_invoice', relatedId: invoice._id },
       {
@@ -61,21 +77,47 @@ async function scanOverdueInvoices() {
           relatedId: invoice._id,
           relatedModel: 'DistributorInvoice',
           targetRole: 'sales',
-          title: `Overdue distributor invoice: ${invoice.invoiceNumber}`,
-          message: `${invoice.distributor?.name || 'Distributor'}${
-            invoice.pharmacyName ? ` (billed to ${invoice.pharmacyName})` : ''
-          } has an outstanding balance of $${balance.toFixed(2)} on invoice ${
-            invoice.invoiceNumber
-          }, overdue since ${invoice.dueDate.toDateString()}.`,
+          title,
+          message,
           isRead: false,
         },
       },
       { upsert: true }
     );
-    if (res.upsertedCount) created += 1;
+    if (res.upsertedCount) {
+      created += 1;
+      newlyCreated.push({ title, message });
+    }
+  }
+
+  if (newlyCreated.length > 0) {
+    await emailOverdueDigest(newlyCreated);
   }
 
   return { scanned: overdueCustomerInvoices.length + overdueDistributorInvoices.length, created };
+}
+
+// Emails the sales team a digest of newly-found overdue invoices. Only
+// fires for invoices that just became overdue this scan, not the full
+// backlog, so a working inbox doesn't get one email per 6-hour re-scan.
+async function emailOverdueDigest(entries) {
+  const recipients = await User.find({ role: 'sales', isActive: true }).select('email');
+  if (recipients.length === 0) return;
+
+  const html = `
+    <h2>Overdue Invoice Alert</h2>
+    <p>${entries.length} invoice(s) have just crossed 30 days overdue:</p>
+    <ul>
+      ${entries.map((e) => `<li><strong>${e.title}</strong><br/>${e.message}</li>`).join('')}
+    </ul>
+    <p>Log in to NovaMax ERP to follow up.</p>
+  `;
+
+  await sendMail({
+    to: recipients.map((u) => u.email),
+    subject: `NovaMax ERP: ${entries.length} new overdue invoice alert(s)`,
+    html,
+  });
 }
 
 // @desc  List notifications visible to the current user (their role, or all for admin)
