@@ -17,6 +17,8 @@ const salesOrderSchema = new mongoose.Schema(
     orderNumber: { type: String, required: true, unique: true, trim: true },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
     warehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse', required: true },
+    // Attributes this order to a medical rep / salesperson for target tracking.
+    salesRep: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
     items: { type: [lineItemSchema], validate: (v) => v.length > 0 },
     subTotal: { type: Number, required: true, min: 0 },
     taxTotal: { type: Number, min: 0, default: 0 },

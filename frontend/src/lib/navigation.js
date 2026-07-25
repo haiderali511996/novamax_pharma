@@ -41,6 +41,14 @@ export const NAV_GROUPS = [
     ],
   },
   {
+    label: 'Field Force',
+    items: [
+      { href: '/field-visits', label: 'Doctor & Chemist Visits' },
+      { href: '/sales-targets', label: 'Sales Targets' },
+      { href: '/expense-claims', label: 'Expense Claims' },
+    ],
+  },
+  {
     label: 'HR & Payroll',
     items: [
       { href: '/employees', label: 'Employees' },

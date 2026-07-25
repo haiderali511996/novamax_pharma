@@ -9,6 +9,7 @@ const ctrl = createCrudController(SalesOrder, {
   populate: [
     { path: 'customer', select: 'name email phone' },
     { path: 'warehouse', select: 'name code' },
+    { path: 'salesRep', select: 'name employeeId' },
     { path: 'items.product', select: 'name sku' },
     { path: 'items.batch', select: 'batchNumber expiryDate' },
   ],

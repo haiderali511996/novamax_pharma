@@ -8,6 +8,7 @@ const columns = [
   { key: 'orderNumber', label: 'Order #' },
   { key: 'customer.name', label: 'Customer' },
   { key: 'warehouse.name', label: 'Warehouse' },
+  { key: 'salesRep.name', label: 'Sales Rep' },
   {
     key: 'status',
     label: 'Status',
@@ -43,6 +44,13 @@ const fields = [
     endpoint: '/warehouses',
     required: true,
     optionLabel: (w) => `${w.name} (${w.code})`,
+  },
+  {
+    name: 'salesRep',
+    label: 'Sales Rep (for target tracking)',
+    type: 'select-async',
+    endpoint: '/employees',
+    optionLabel: (e) => `${e.name} (${e.employeeId})`,
   },
   {
     name: 'items',
