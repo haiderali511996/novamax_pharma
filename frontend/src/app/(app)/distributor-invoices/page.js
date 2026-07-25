@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import ResourceManager from '@/components/ResourceManager';
 
 const STATUS_OPTIONS = [
@@ -48,6 +49,15 @@ const fields = [
   { name: 'pharmacyName', label: 'Pharmacy / Customer Name' },
   { name: 'pharmacyLicenseNumber', label: 'Pharmacy License Number' },
   { name: 'pharmacyAddress', label: 'Pharmacy Address', type: 'textarea' },
+  {
+    name: 'items',
+    label: 'Items (optional - itemizes the printed invoice)',
+    type: 'line-items',
+    productEndpoint: '/products',
+    priceField: 'unitPrice',
+    showTax: true,
+    totalsTargets: { grandTotal: 'amount' },
+  },
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'amountPaid', label: 'Amount Paid', type: 'number' },
   { name: 'dueDate', label: 'Due Date', type: 'date', required: true },
@@ -63,6 +73,11 @@ export default function DistributorInvoicesPage() {
       endpoint="/distributor-invoices"
       columns={columns}
       fields={fields}
+      renderRowActions={(item) => (
+        <Link href={`/distributor-invoices/${item._id}/print`} target="_blank" className="mr-3 text-blue-700 hover:underline">
+          Print
+        </Link>
+      )}
     />
   );
 }

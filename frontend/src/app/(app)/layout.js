@@ -23,7 +23,9 @@ export default function AppLayout({ children }) {
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-slate-50 p-6 print:overflow-visible print:bg-white print:p-0">
+          {children}
+        </main>
       </div>
     </div>
   );

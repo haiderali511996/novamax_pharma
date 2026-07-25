@@ -6,7 +6,10 @@ const { createDistributorInvoiceWithLedgerEntry } = require('../controllers/dist
 
 const router = express.Router();
 const ctrl = createCrudController(DistributorInvoice, {
-  populate: [{ path: 'distributor', select: 'name territory location' }],
+  populate: [
+    { path: 'distributor', select: 'name territory location phone licenseNumber' },
+    { path: 'items.product', select: 'name sku' },
+  ],
   searchFields: ['invoiceNumber'],
 });
 

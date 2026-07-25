@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import ResourceManager from '@/components/ResourceManager';
 
 const STATUS_OPTIONS = [
@@ -57,5 +58,17 @@ const fields = [
 ];
 
 export default function InvoicesPage() {
-  return <ResourceManager title="Invoices" endpoint="/invoices" columns={columns} fields={fields} />;
+  return (
+    <ResourceManager
+      title="Invoices"
+      endpoint="/invoices"
+      columns={columns}
+      fields={fields}
+      renderRowActions={(item) => (
+        <Link href={`/invoices/${item._id}/print`} target="_blank" className="mr-3 text-blue-700 hover:underline">
+          Print
+        </Link>
+      )}
+    />
+  );
 }

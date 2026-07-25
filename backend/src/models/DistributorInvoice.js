@@ -4,6 +4,23 @@ const mongoose = require('mongoose');
 // partially_paid, fully_paid. Overdue is computed, not stored.
 const INVOICE_STATUSES = ['sale_based', 'partially_paid', 'fully_paid'];
 
+// Optional line items so the printable invoice can show a real item table
+// (matching the reference distributor invoice format) instead of just a
+// lump-sum amount. Left optional since not every distributor invoice needs
+// itemization for bookkeeping purposes.
+const distributorInvoiceItemSchema = new mongoose.Schema(
+  {
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    batchNumber: { type: String, trim: true },
+    expiryDate: { type: Date },
+    quantity: { type: Number, required: true, min: 1 },
+    unitPrice: { type: Number, required: true, min: 0 },
+    taxRate: { type: Number, min: 0, default: 0 },
+    total: { type: Number, required: true, min: 0 },
+  },
+  { _id: false }
+);
+
 const distributorInvoiceSchema = new mongoose.Schema(
   {
     invoiceNumber: { type: String, required: true, unique: true, trim: true },
@@ -15,6 +32,7 @@ const distributorInvoiceSchema = new mongoose.Schema(
     pharmacyName: { type: String, trim: true },
     pharmacyLicenseNumber: { type: String, trim: true },
     pharmacyAddress: { type: String, trim: true },
+    items: { type: [distributorInvoiceItemSchema], default: [] },
     amount: { type: Number, required: true, min: 0 },
     amountPaid: { type: Number, min: 0, default: 0 },
     dueDate: { type: Date, required: true },

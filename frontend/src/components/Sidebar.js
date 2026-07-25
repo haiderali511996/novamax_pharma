@@ -10,7 +10,7 @@ export default function Sidebar() {
   const { user } = useAuth();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white md:block">
+    <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white md:block print:hidden">
       <div className="border-b border-slate-200 px-5 py-4">
         <p className="text-lg font-bold text-emerald-700">NovaMax Pharma</p>
         <p className="text-xs text-slate-500">Internal ERP System</p>
