@@ -27,6 +27,7 @@ export const NAV_GROUPS = [
     label: 'Purchases',
     items: [
       { href: '/suppliers', label: 'Suppliers' },
+      { href: '/manufacturers', label: 'Manufacturers' },
       { href: '/purchase-orders', label: 'Purchase Orders' },
     ],
   },
@@ -54,6 +55,15 @@ export const NAV_GROUPS = [
       { href: '/accounts', label: 'Accounts' },
       { href: '/transactions', label: 'Transactions' },
       { href: '/expenses', label: 'Expenses' },
+    ],
+  },
+  {
+    label: 'Ledgers',
+    items: [
+      { href: '/ledgers/customers', label: 'Customer Ledger' },
+      { href: '/ledgers/manufacturers', label: 'Manufacturer Ledger' },
+      { href: '/ledgers/employees', label: 'Employee Ledger' },
+      { href: '/ledgers/expenses', label: 'Expense Ledger' },
     ],
   },
   {

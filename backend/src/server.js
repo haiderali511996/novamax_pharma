@@ -31,6 +31,8 @@ const distributorRoutes = require('./routes/distributorRoutes');
 const distributorInvoiceRoutes = require('./routes/distributorInvoiceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { scanOverdueInvoices } = require('./controllers/notificationController');
+const manufacturerRoutes = require('./routes/manufacturerRoutes');
+const ledgerRoutes = require('./routes/ledgerRoutes');
 
 const app = express();
 
@@ -67,6 +69,8 @@ app.use('/api/territories', territoryRoutes);
 app.use('/api/distributors', distributorRoutes);
 app.use('/api/distributor-invoices', distributorInvoiceRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/manufacturers', manufacturerRoutes);
+app.use('/api/ledger-entries', ledgerRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
