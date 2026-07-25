@@ -83,6 +83,9 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Administration',
-    items: [{ href: '/users', label: 'Users', adminOnly: true }],
+    items: [
+      { href: '/users', label: 'Users', adminOnly: true },
+      { href: '/audit-logs', label: 'Audit Log', adminOnly: true },
+    ],
   },
 ];

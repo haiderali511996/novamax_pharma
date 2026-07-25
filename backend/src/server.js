@@ -40,6 +40,7 @@ const salesTargetRoutes = require('./routes/salesTargetRoutes');
 const expenseClaimRoutes = require('./routes/expenseClaimRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const auditLogRoutes = require('./routes/auditLogRoutes');
 
 const app = express();
 
@@ -96,6 +97,7 @@ app.use('/api/sales-targets', salesTargetRoutes);
 app.use('/api/expense-claims', expenseClaimRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

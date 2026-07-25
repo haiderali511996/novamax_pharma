@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const ExpenseClaim = require('../models/ExpenseClaim');
 const Expense = require('../models/Expense');
 const LedgerEntry = require('../models/LedgerEntry');
+const { logAudit } = require('../utils/auditLogger');
 
 const createExpenseClaim = asyncHandler(async (req, res) => {
   req.body.createdBy = req.user._id;
@@ -49,6 +50,15 @@ const approveExpenseClaim = asyncHandler(async (req, res) => {
   claim.reviewedAt = new Date();
   await claim.save();
 
+  await logAudit({
+    user: req.user,
+    action: 'action',
+    actionLabel: 'approve',
+    resource: 'ExpenseClaim',
+    resourceId: claim._id,
+    after: claim,
+  });
+
   res.json({ success: true, data: claim });
 });
 
@@ -66,6 +76,16 @@ const rejectExpenseClaim = asyncHandler(async (req, res) => {
   claim.reviewedBy = req.user._id;
   claim.reviewedAt = new Date();
   await claim.save();
+
+  await logAudit({
+    user: req.user,
+    action: 'action',
+    actionLabel: 'reject',
+    resource: 'ExpenseClaim',
+    resourceId: claim._id,
+    after: claim,
+  });
+
   res.json({ success: true, data: claim });
 });
 

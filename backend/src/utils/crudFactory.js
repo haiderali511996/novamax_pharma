@@ -1,6 +1,10 @@
 const asyncHandler = require('express-async-handler');
+const { logAudit } = require('./auditLogger');
 
-// Generic CRUD controller factory for simple REST resources.
+// Generic CRUD controller factory for simple REST resources. Every
+// create/update/delete automatically writes an AuditLog entry - this is
+// the one place nearly all resources' mutations pass through, so hooking
+// it here covers the whole app without instrumenting each route by hand.
 function createCrudController(Model, options = {}) {
   const { populate, searchFields = [] } = options;
 
@@ -40,10 +44,12 @@ function createCrudController(Model, options = {}) {
   const createOne = asyncHandler(async (req, res) => {
     if (req.user) req.body.createdBy = req.user._id;
     const item = await Model.create(req.body);
+    await logAudit({ user: req.user, action: 'create', resource: Model.modelName, resourceId: item._id, after: item });
     res.status(201).json({ success: true, data: item });
   });
 
   const updateOne = asyncHandler(async (req, res) => {
+    const before = await Model.findById(req.params.id).lean();
     const item = await Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -52,6 +58,14 @@ function createCrudController(Model, options = {}) {
       res.status(404);
       throw new Error('Resource not found');
     }
+    await logAudit({
+      user: req.user,
+      action: 'update',
+      resource: Model.modelName,
+      resourceId: item._id,
+      before,
+      after: item,
+    });
     res.json({ success: true, data: item });
   });
 
@@ -61,6 +75,7 @@ function createCrudController(Model, options = {}) {
       res.status(404);
       throw new Error('Resource not found');
     }
+    await logAudit({ user: req.user, action: 'delete', resource: Model.modelName, resourceId: item._id, before: item });
     res.json({ success: true, data: {} });
   });
 

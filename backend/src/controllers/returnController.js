@@ -3,6 +3,7 @@ const Return = require('../models/Return');
 const Batch = require('../models/Batch');
 const StockMovement = require('../models/StockMovement');
 const LedgerEntry = require('../models/LedgerEntry');
+const { logAudit } = require('../utils/auditLogger');
 
 const createReturn = asyncHandler(async (req, res) => {
   req.body.createdBy = req.user._id;
@@ -60,6 +61,8 @@ const approveReturn = asyncHandler(async (req, res) => {
   ret.stockApplied = true;
   await ret.save();
 
+  await logAudit({ user: req.user, action: 'action', actionLabel: 'approve', resource: 'Return', resourceId: ret._id, after: ret });
+
   res.json({ success: true, data: ret });
 });
 
@@ -77,6 +80,9 @@ const rejectReturn = asyncHandler(async (req, res) => {
   }
   ret.status = 'rejected';
   await ret.save();
+
+  await logAudit({ user: req.user, action: 'action', actionLabel: 'reject', resource: 'Return', resourceId: ret._id, after: ret });
+
   res.json({ success: true, data: ret });
 });
 

@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const PurchaseOrder = require('../models/PurchaseOrder');
 const Batch = require('../models/Batch');
 const StockMovement = require('../models/StockMovement');
+const { logAudit } = require('../utils/auditLogger');
 
 // @desc  Receive a purchase order into inventory: creates or tops up a
 //        batch per line (matched on product+warehouse+batchNumber) and
@@ -74,6 +75,15 @@ const receivePurchaseOrder = asyncHandler(async (req, res) => {
   order.stockApplied = true;
   order.status = 'received';
   await order.save();
+
+  await logAudit({
+    user: req.user,
+    action: 'action',
+    actionLabel: 'receive',
+    resource: 'PurchaseOrder',
+    resourceId: order._id,
+    after: order,
+  });
 
   res.json({ success: true, data: order });
 });

@@ -4,6 +4,7 @@ const Batch = require('../models/Batch');
 const StockMovement = require('../models/StockMovement');
 const Invoice = require('../models/Invoice');
 const { postInvoiceLedgerEntry } = require('./invoiceController');
+const { logAudit } = require('../utils/auditLogger');
 
 // @desc  Confirm a sales order: deducts stock (FEFO if no batch was chosen
 //        on the line item) and logs a stock-out movement per batch used.
@@ -77,6 +78,15 @@ const confirmSalesOrder = asyncHandler(async (req, res) => {
   if (order.status === 'draft') order.status = 'confirmed';
   await order.save();
 
+  await logAudit({
+    user: req.user,
+    action: 'action',
+    actionLabel: 'confirm',
+    resource: 'SalesOrder',
+    resourceId: order._id,
+    after: order,
+  });
+
   res.json({ success: true, data: order });
 });
 
@@ -111,6 +121,15 @@ const generateInvoiceForSalesOrder = asyncHandler(async (req, res) => {
   });
 
   await postInvoiceLedgerEntry(invoice, req.user._id, ` (from order ${order.orderNumber})`);
+
+  await logAudit({
+    user: req.user,
+    action: 'action',
+    actionLabel: 'generate-invoice',
+    resource: 'SalesOrder',
+    resourceId: order._id,
+    after: { invoiceId: invoice._id, invoiceNumber: invoice.invoiceNumber },
+  });
 
   res.status(201).json({ success: true, data: invoice });
 });
