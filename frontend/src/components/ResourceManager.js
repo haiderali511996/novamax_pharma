@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import LineItemsEditor from './LineItemsEditor';
 import ReturnItemsEditor from './ReturnItemsEditor';
+import { exportToCSV } from '@/lib/csv';
 
 function getNested(obj, path) {
   return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
@@ -288,6 +289,18 @@ export default function ResourceManager({
             onChange={(e) => setSearch(e.target.value)}
             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
           />
+          <button
+            onClick={() =>
+              exportToCSV(
+                title,
+                items,
+                columns.map((c) => ({ key: c.key, label: c.label, value: c.csvValue }))
+              )
+            }
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+          >
+            Export CSV
+          </button>
           <button
             onClick={openCreate}
             className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"

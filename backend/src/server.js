@@ -37,6 +37,7 @@ const returnRoutes = require('./routes/returnRoutes');
 const fieldVisitRoutes = require('./routes/fieldVisitRoutes');
 const salesTargetRoutes = require('./routes/salesTargetRoutes');
 const expenseClaimRoutes = require('./routes/expenseClaimRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use('/api/returns', returnRoutes);
 app.use('/api/field-visits', fieldVisitRoutes);
 app.use('/api/sales-targets', salesTargetRoutes);
 app.use('/api/expense-claims', expenseClaimRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

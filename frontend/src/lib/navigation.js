@@ -3,6 +3,7 @@ export const NAV_GROUPS = [
     label: 'Overview',
     items: [
       { href: '/dashboard', label: 'Dashboard' },
+      { href: '/reports', label: 'Reports' },
       { href: '/notifications', label: 'Notifications' },
     ],
   },
