@@ -1,20 +1,18 @@
 const express = require('express');
-const Employee = require('../models/Employee');
+const Distributor = require('../models/Distributor');
 const { protect } = require('../middleware/auth');
 const { createCrudController } = require('../utils/crudFactory');
-const { getOrgChart } = require('../controllers/employeeController');
 
 const router = express.Router();
-const ctrl = createCrudController(Employee, {
-  searchFields: ['name', 'employeeId', 'email', 'department'],
+const ctrl = createCrudController(Distributor, {
   populate: [
-    { path: 'reportsTo', select: 'name employeeId designation' },
     { path: 'territory', select: 'name region city' },
+    { path: 'products', select: 'name sku' },
   ],
+  searchFields: ['name', 'location', 'contactPerson', 'phone', 'licenseNumber'],
 });
 
 router.use(protect);
-router.get('/org-chart', getOrgChart);
 router.route('/').get(ctrl.getAll).post(ctrl.createOne);
 router.route('/:id').get(ctrl.getOne).put(ctrl.updateOne).delete(ctrl.deleteOne);
 

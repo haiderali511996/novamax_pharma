@@ -1,7 +1,10 @@
 export const NAV_GROUPS = [
   {
     label: 'Overview',
-    items: [{ href: '/dashboard', label: 'Dashboard' }],
+    items: [
+      { href: '/dashboard', label: 'Dashboard' },
+      { href: '/notifications', label: 'Notifications' },
+    ],
   },
   {
     label: 'Inventory',
@@ -28,9 +31,18 @@ export const NAV_GROUPS = [
     ],
   },
   {
+    label: 'Distribution',
+    items: [
+      { href: '/territories', label: 'Territories / Areas' },
+      { href: '/distributors', label: 'Distributors' },
+      { href: '/distributor-invoices', label: 'Distributor Invoices' },
+    ],
+  },
+  {
     label: 'HR & Payroll',
     items: [
       { href: '/employees', label: 'Employees' },
+      { href: '/org-chart', label: 'Org Chart' },
       { href: '/attendance', label: 'Attendance' },
       { href: '/leaves', label: 'Leaves' },
       { href: '/payroll', label: 'Payroll' },

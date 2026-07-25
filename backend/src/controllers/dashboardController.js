@@ -9,6 +9,8 @@ const Employee = require('../models/Employee');
 const Invoice = require('../models/Invoice');
 const Expense = require('../models/Expense');
 const License = require('../models/License');
+const Distributor = require('../models/Distributor');
+const Notification = require('../models/Notification');
 
 // @desc  Aggregate key stats across all modules for the dashboard home page
 // @route GET /api/dashboard/summary
@@ -30,6 +32,8 @@ const getSummary = asyncHandler(async (req, res) => {
     unpaidInvoices,
     monthlyExpenses,
     licenseAlerts,
+    distributorCount,
+    unreadNotifications,
   ] = await Promise.all([
     Product.countDocuments({ isActive: true }),
     Batch.countDocuments({ quantity: { $gt: 0, $lte: 20 } }),
@@ -45,6 +49,8 @@ const getSummary = asyncHandler(async (req, res) => {
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
     License.countDocuments({ expiryDate: { $lte: in60Days } }),
+    Distributor.countDocuments({ isActive: true }),
+    Notification.countDocuments({ isRead: false }),
   ]);
 
   res.json({
@@ -61,6 +67,8 @@ const getSummary = asyncHandler(async (req, res) => {
       unpaidInvoices,
       monthlyExpenses: monthlyExpenses[0]?.total || 0,
       licenseAlerts,
+      distributors: distributorCount,
+      unreadNotifications,
     },
   });
 });

@@ -8,9 +8,11 @@ Internal ERP system for NovaMax Pharmaceutical, built with Next.js, Node.js/Expr
 - **Inventory**: Products, batches with expiry tracking, warehouses, stock movements
 - **Sales**: Customers, sales orders, invoices
 - **Purchases**: Suppliers, purchase orders
-- **HR & Payroll**: Employees, attendance, leaves, payroll
+- **Distribution**: Territories/areas, distributors (with the products and promotional items they carry), and distributor invoices — each invoice also captures the receiving pharmacy's name, license number and address, since every distributor prints its own invoice format
+- **HR & Payroll**: Employees, attendance, leaves, payroll, and an org chart (CEO down to office boy) built from each employee's "Reports To" and territory assignment
 - **Finance**: Chart of accounts, transactions, expenses
 - **Compliance**: Drug licenses, GMP certificates and other regulatory documents with renewal alerts
+- **Notifications**: Automatic intimation to the Sales team when a customer or distributor invoice has been unpaid for 30+ days (background scan every 6 hours, plus a manual "Run Scan Now" for admins/managers)
 
 ## Roles
 
@@ -68,9 +70,11 @@ PUT    /api/<resource>/:id      update
 DELETE /api/<resource>/:id      delete
 ```
 
-Resources: `products`, `batches`, `warehouses`, `stock-movements`, `customers`, `suppliers`, `sales-orders`, `purchase-orders`, `invoices`, `employees`, `attendance`, `leaves`, `payroll`, `accounts`, `transactions`, `expenses`, `licenses`, `users`.
+Resources: `products`, `batches`, `warehouses`, `stock-movements`, `customers`, `suppliers`, `sales-orders`, `purchase-orders`, `invoices`, `territories`, `distributors`, `distributor-invoices`, `employees`, `attendance`, `leaves`, `payroll`, `accounts`, `transactions`, `expenses`, `licenses`, `users`.
 
 Extra endpoints:
 - `GET /api/batches/expiry-alerts?days=90` — batches expiring within N days
 - `GET /api/licenses/renewal-alerts?days=60` — licenses needing renewal soon
+- `GET /api/employees/org-chart` — flattened employee list for building the reporting-hierarchy tree
+- `GET /api/notifications` / `PUT /api/notifications/:id/read` / `POST /api/notifications/scan-overdue` (admin/manager) — the overdue-invoice intimation system
 - `GET /api/dashboard/summary` — aggregated stats for the dashboard home page

@@ -26,6 +26,11 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const licenseRoutes = require('./routes/licenseRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const territoryRoutes = require('./routes/territoryRoutes');
+const distributorRoutes = require('./routes/distributorRoutes');
+const distributorInvoiceRoutes = require('./routes/distributorInvoiceRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const { scanOverdueInvoices } = require('./controllers/notificationController');
 
 const app = express();
 
@@ -58,16 +63,28 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/licenses', licenseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/territories', territoryRoutes);
+app.use('/api/distributors', distributorRoutes);
+app.use('/api/distributor-invoices', distributorInvoiceRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+const SCAN_INTERVAL_MS = 6 * 60 * 60 * 1000; // re-check overdue invoices every 6 hours
 
 async function start() {
   try {
     await connectDB();
     app.listen(PORT, () => console.log(`NovaMax ERP API listening on port ${PORT}`));
+
+    if (process.env.NODE_ENV !== 'test') {
+      scanOverdueInvoices().catch((err) => console.error('Overdue invoice scan failed:', err.message));
+      setInterval(() => {
+        scanOverdueInvoices().catch((err) => console.error('Overdue invoice scan failed:', err.message));
+      }, SCAN_INTERVAL_MS);
+    }
   } catch (err) {
     console.error('Failed to start server:', err.message);
     process.exit(1);

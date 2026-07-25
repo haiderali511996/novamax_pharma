@@ -16,6 +16,8 @@ const CARDS = [
   { key: 'unpaidInvoices', label: 'Unpaid Invoices', color: 'bg-orange-50 text-orange-700' },
   { key: 'monthlyExpenses', label: 'Expenses This Month', color: 'bg-rose-50 text-rose-700', currency: true },
   { key: 'licenseAlerts', label: 'License Renewals Due', color: 'bg-yellow-50 text-yellow-700' },
+  { key: 'distributors', label: 'Active Distributors', color: 'bg-cyan-50 text-cyan-700' },
+  { key: 'unreadNotifications', label: 'Unread Notifications', color: 'bg-red-50 text-red-700' },
 ];
 
 export default function DashboardPage() {

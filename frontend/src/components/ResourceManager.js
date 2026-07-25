@@ -41,9 +41,51 @@ function AsyncSelectField({ field, value, onChange }) {
   );
 }
 
+function MultiSelectAsyncField({ field, value, onChange }) {
+  const [options, setOptions] = useState([]);
+  const selected = Array.isArray(value) ? value : [];
+
+  useEffect(() => {
+    let active = true;
+    api
+      .get(field.endpoint, { limit: 500 })
+      .then(({ data }) => {
+        if (active) setOptions(data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [field.endpoint]);
+
+  function toggle(id) {
+    onChange(selected.includes(id) ? selected.filter((v) => v !== id) : [...selected, id]);
+  }
+
+  return (
+    <div className="max-h-40 overflow-y-auto rounded-md border border-slate-300 p-2">
+      {options.length === 0 && <p className="text-xs text-slate-400">No options available.</p>}
+      {options.map((opt) => (
+        <label key={opt._id} className="flex items-center gap-2 py-0.5 text-sm">
+          <input
+            type="checkbox"
+            checked={selected.includes(opt._id)}
+            onChange={() => toggle(opt._id)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          {field.optionLabel(opt)}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 function FormField({ field, value, onChange, onBulkChange }) {
   if (field.type === 'line-items') {
     return <LineItemsEditor field={field} value={value} onBulkChange={onBulkChange} />;
+  }
+  if (field.type === 'multiselect-async') {
+    return <MultiSelectAsyncField field={field} value={value} onChange={onChange} />;
   }
   if (field.type === 'select-async') {
     return <AsyncSelectField field={field} value={value} onChange={onChange} />;
@@ -149,7 +191,7 @@ export default function ResourceManager({
     const initial = {};
     fields.forEach((f) => {
       if (f.type === 'checkbox') initial[f.name] = false;
-      else if (f.type === 'line-items') initial[f.name] = [];
+      else if (f.type === 'line-items' || f.type === 'multiselect-async') initial[f.name] = [];
       else if (f.computed) initial[f.name] = 0;
       else initial[f.name] = '';
     });
@@ -162,7 +204,15 @@ export default function ResourceManager({
     const initial = {};
     fields.forEach((f) => {
       const raw = getNested(item, f.name);
-      initial[f.name] = f.type === 'select-async' && raw && typeof raw === 'object' ? raw._id : raw ?? '';
+      if (f.type === 'select-async') {
+        initial[f.name] = raw && typeof raw === 'object' ? raw._id : raw ?? '';
+      } else if (f.type === 'multiselect-async') {
+        initial[f.name] = Array.isArray(raw)
+          ? raw.map((v) => (v && typeof v === 'object' ? v._id : v))
+          : [];
+      } else {
+        initial[f.name] = raw ?? '';
+      }
     });
     setFormData(initial);
     setEditingId(item._id);
