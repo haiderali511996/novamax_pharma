@@ -164,6 +164,7 @@ export default function ResourceManager({
   populateHint,
   allowEdit = true,
   allowDelete = true,
+  renderRowActions,
 }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -294,7 +295,7 @@ export default function ResourceManager({
                   {col.label}
                 </th>
               ))}
-              {(allowEdit || allowDelete) && (
+              {(allowEdit || allowDelete || renderRowActions) && (
                 <th className="px-4 py-2 text-right font-semibold text-slate-600">Actions</th>
               )}
             </tr>
@@ -320,8 +321,9 @@ export default function ResourceManager({
                       {col.render ? col.render(item) : String(getNested(item, col.key) ?? '')}
                     </td>
                   ))}
-                  {(allowEdit || allowDelete) && (
+                  {(allowEdit || allowDelete || renderRowActions) && (
                     <td className="px-4 py-2 text-right">
+                      {renderRowActions && renderRowActions(item, { reload: load, setError })}
                       {allowEdit && (
                         <button
                           onClick={() => openEdit(item)}

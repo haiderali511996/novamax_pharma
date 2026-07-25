@@ -1,11 +1,27 @@
 'use client';
 
+import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
+import { api } from '@/lib/api';
 
 const columns = [
   { key: 'orderNumber', label: 'Order #' },
   { key: 'customer.name', label: 'Customer' },
-  { key: 'status', label: 'Status' },
+  { key: 'warehouse.name', label: 'Warehouse' },
+  {
+    key: 'status',
+    label: 'Status',
+    render: (i) => (
+      <span>
+        {i.status}
+        {i.stockApplied && (
+          <span className="ml-1 rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">
+            Stock deducted
+          </span>
+        )}
+      </span>
+    ),
+  },
   { key: 'grandTotal', label: 'Total', render: (i) => `$${i.grandTotal}` },
   { key: 'orderDate', label: 'Date', render: (i) => new Date(i.orderDate).toLocaleDateString() },
 ];
@@ -19,6 +35,14 @@ const fields = [
     endpoint: '/customers',
     required: true,
     optionLabel: (c) => c.name,
+  },
+  {
+    name: 'warehouse',
+    label: 'Warehouse (stock will be deducted from here on confirm)',
+    type: 'select-async',
+    endpoint: '/warehouses',
+    required: true,
+    optionLabel: (w) => `${w.name} (${w.code})`,
   },
   {
     name: 'items',
@@ -42,6 +66,39 @@ const fields = [
   { name: 'notes', label: 'Notes', type: 'textarea' },
 ];
 
+function ConfirmButton({ item, reload, setError }) {
+  const [busy, setBusy] = useState(false);
+
+  if (item.stockApplied || item.status === 'cancelled') return null;
+
+  async function handleConfirm() {
+    if (!confirm(`Confirm order ${item.orderNumber} and deduct stock from its warehouse?`)) return;
+    setBusy(true);
+    try {
+      await api.post(`/sales-orders/${item._id}/confirm`);
+      await reload();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button onClick={handleConfirm} disabled={busy} className="mr-3 text-blue-700 hover:underline disabled:opacity-50">
+      {busy ? 'Confirming...' : 'Confirm & Deduct Stock'}
+    </button>
+  );
+}
+
 export default function SalesOrdersPage() {
-  return <ResourceManager title="Sales Orders" endpoint="/sales-orders" columns={columns} fields={fields} />;
+  return (
+    <ResourceManager
+      title="Sales Orders"
+      endpoint="/sales-orders"
+      columns={columns}
+      fields={fields}
+      renderRowActions={(item, ctx) => <ConfirmButton item={item} {...ctx} />}
+    />
+  );
 }
