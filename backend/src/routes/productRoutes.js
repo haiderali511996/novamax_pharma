@@ -4,7 +4,10 @@ const { protect } = require('../middleware/auth');
 const { createCrudController } = require('../utils/crudFactory');
 
 const router = express.Router();
-const ctrl = createCrudController(Product, { searchFields: ['name', 'sku', 'genericName', 'manufacturer'] });
+const ctrl = createCrudController(Product, {
+  searchFields: ['name', 'sku', 'genericName'],
+  populate: [{ path: 'manufacturer', select: 'name' }],
+});
 
 router.use(protect);
 router.route('/').get(ctrl.getAll).post(ctrl.createOne);

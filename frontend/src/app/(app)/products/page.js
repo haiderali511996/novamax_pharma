@@ -6,7 +6,7 @@ const columns = [
   { key: 'name', label: 'Name' },
   { key: 'sku', label: 'SKU' },
   { key: 'category', label: 'Category' },
-  { key: 'manufacturer', label: 'Manufacturer' },
+  { key: 'manufacturer.name', label: 'Manufacturer' },
   { key: 'sellingPrice', label: 'Price', render: (i) => `$${i.sellingPrice}` },
   { key: 'reorderLevel', label: 'Reorder Level' },
 ];
@@ -21,7 +21,13 @@ const fields = [
     type: 'select',
     options: ['tablet', 'capsule', 'syrup', 'injection', 'ointment', 'drops', 'device', 'other'],
   },
-  { name: 'manufacturer', label: 'Manufacturer' },
+  {
+    name: 'manufacturer',
+    label: 'Manufacturer',
+    type: 'select-async',
+    endpoint: '/manufacturers',
+    optionLabel: (m) => m.name,
+  },
   { name: 'unit', label: 'Unit' },
   { name: 'packSize', label: 'Pack Size' },
   { name: 'costPrice', label: 'Cost Price', type: 'number', required: true },

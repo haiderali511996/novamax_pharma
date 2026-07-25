@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema(
       enum: ['tablet', 'capsule', 'syrup', 'injection', 'ointment', 'drops', 'device', 'other'],
       default: 'other',
     },
-    manufacturer: { type: String, trim: true },
+    manufacturer: { type: mongoose.Schema.Types.ObjectId, ref: 'Manufacturer' },
     unit: { type: String, default: 'pcs' },
     packSize: { type: String, trim: true },
     isControlledSubstance: { type: Boolean, default: false },
