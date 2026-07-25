@@ -10,12 +10,6 @@ const columns = [
   { key: 'orderDate', label: 'Date', render: (i) => new Date(i.orderDate).toLocaleDateString() },
 ];
 
-const itemsPlaceholder = JSON.stringify(
-  [{ product: '<productId>', quantity: 1, unitPrice: 10, taxRate: 0, total: 10 }],
-  null,
-  2
-);
-
 const fields = [
   { name: 'orderNumber', label: 'Order Number', required: true },
   {
@@ -26,10 +20,19 @@ const fields = [
     required: true,
     optionLabel: (c) => c.name,
   },
-  { name: 'items', label: 'Items (JSON array)', type: 'json', required: true, placeholder: itemsPlaceholder },
-  { name: 'subTotal', label: 'Sub Total', type: 'number', required: true },
-  { name: 'taxTotal', label: 'Tax Total', type: 'number' },
-  { name: 'grandTotal', label: 'Grand Total', type: 'number', required: true },
+  {
+    name: 'items',
+    label: 'Items',
+    type: 'line-items',
+    required: true,
+    productEndpoint: '/products',
+    priceField: 'unitPrice',
+    showTax: true,
+    totalsTargets: { subTotal: 'subTotal', taxTotal: 'taxTotal', grandTotal: 'grandTotal' },
+  },
+  { name: 'subTotal', label: 'Sub Total', type: 'number', computed: true },
+  { name: 'taxTotal', label: 'Tax Total', type: 'number', computed: true },
+  { name: 'grandTotal', label: 'Grand Total', type: 'number', computed: true },
   {
     name: 'status',
     label: 'Status',

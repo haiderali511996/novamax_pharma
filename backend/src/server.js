@@ -30,7 +30,9 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+// Auth uses a Bearer token, not cookies, so no credentials mode is needed;
+// that also lets CLIENT_URL default to '*' without violating CORS rules.
+app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(express.json());
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 

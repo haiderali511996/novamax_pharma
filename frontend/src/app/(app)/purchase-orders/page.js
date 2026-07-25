@@ -10,12 +10,6 @@ const columns = [
   { key: 'orderDate', label: 'Date', render: (i) => new Date(i.orderDate).toLocaleDateString() },
 ];
 
-const itemsPlaceholder = JSON.stringify(
-  [{ product: '<productId>', quantity: 10, unitCost: 5, total: 50 }],
-  null,
-  2
-);
-
 const fields = [
   { name: 'poNumber', label: 'PO Number', required: true },
   {
@@ -26,9 +20,18 @@ const fields = [
     required: true,
     optionLabel: (s) => s.name,
   },
-  { name: 'items', label: 'Items (JSON array)', type: 'json', required: true, placeholder: itemsPlaceholder },
-  { name: 'subTotal', label: 'Sub Total', type: 'number', required: true },
-  { name: 'grandTotal', label: 'Grand Total', type: 'number', required: true },
+  {
+    name: 'items',
+    label: 'Items',
+    type: 'line-items',
+    required: true,
+    productEndpoint: '/products',
+    priceField: 'unitCost',
+    showTax: false,
+    totalsTargets: { subTotal: 'subTotal', grandTotal: 'grandTotal' },
+  },
+  { name: 'subTotal', label: 'Sub Total', type: 'number', computed: true },
+  { name: 'grandTotal', label: 'Grand Total', type: 'number', computed: true },
   { name: 'status', label: 'Status', type: 'select', options: ['draft', 'ordered', 'received', 'cancelled'] },
   { name: 'expectedDate', label: 'Expected Date', type: 'date' },
   { name: 'notes', label: 'Notes', type: 'textarea' },

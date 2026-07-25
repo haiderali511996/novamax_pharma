@@ -21,6 +21,13 @@ const fields = [
     required: true,
     optionLabel: (c) => c.name,
   },
+  {
+    name: 'salesOrder',
+    label: 'Sales Order (optional)',
+    type: 'select-async',
+    endpoint: '/sales-orders',
+    optionLabel: (o) => `${o.orderNumber} - $${o.grandTotal}`,
+  },
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'amountPaid', label: 'Amount Paid', type: 'number' },
   { name: 'dueDate', label: 'Due Date', type: 'date', required: true },

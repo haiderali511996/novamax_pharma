@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import LineItemsEditor from './LineItemsEditor';
 
 function getNested(obj, path) {
   return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
@@ -40,7 +41,10 @@ function AsyncSelectField({ field, value, onChange }) {
   );
 }
 
-function FormField({ field, value, onChange }) {
+function FormField({ field, value, onChange, onBulkChange }) {
+  if (field.type === 'line-items') {
+    return <LineItemsEditor field={field} value={value} onBulkChange={onBulkChange} />;
+  }
   if (field.type === 'select-async') {
     return <AsyncSelectField field={field} value={value} onChange={onChange} />;
   }
@@ -144,7 +148,10 @@ export default function ResourceManager({
   function openCreate() {
     const initial = {};
     fields.forEach((f) => {
-      initial[f.name] = f.type === 'checkbox' ? false : '';
+      if (f.type === 'checkbox') initial[f.name] = false;
+      else if (f.type === 'line-items') initial[f.name] = [];
+      else if (f.computed) initial[f.name] = 0;
+      else initial[f.name] = '';
     });
     setFormData(initial);
     setEditingId(null);
@@ -293,19 +300,22 @@ export default function ResourceManager({
               {editingId ? `Edit ${title}` : `Add ${title}`}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-3">
-              {fields.map((f) => (
-                <div key={f.name} className={f.type === 'checkbox' ? 'flex items-center gap-2' : ''}>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    {f.label}
-                    {f.required && <span className="text-red-500"> *</span>}
-                  </label>
-                  <FormField
-                    field={f}
-                    value={formData[f.name]}
-                    onChange={(v) => setFormData((prev) => ({ ...prev, [f.name]: v }))}
-                  />
-                </div>
-              ))}
+              {fields
+                .filter((f) => !f.computed)
+                .map((f) => (
+                  <div key={f.name} className={f.type === 'checkbox' ? 'flex items-center gap-2' : ''}>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      {f.label}
+                      {f.required && <span className="text-red-500"> *</span>}
+                    </label>
+                    <FormField
+                      field={f}
+                      value={formData[f.name]}
+                      onChange={(v) => setFormData((prev) => ({ ...prev, [f.name]: v }))}
+                      onBulkChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+                    />
+                  </div>
+                ))}
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex justify-end gap-2 pt-2">
                 <button
