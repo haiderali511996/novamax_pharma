@@ -2,6 +2,8 @@ const asyncHandler = require('express-async-handler');
 const SalesOrder = require('../models/SalesOrder');
 const Batch = require('../models/Batch');
 const StockMovement = require('../models/StockMovement');
+const Invoice = require('../models/Invoice');
+const { postInvoiceLedgerEntry } = require('./invoiceController');
 
 // @desc  Confirm a sales order: deducts stock (FEFO if no batch was chosen
 //        on the line item) and logs a stock-out movement per batch used.
@@ -78,4 +80,39 @@ const confirmSalesOrder = asyncHandler(async (req, res) => {
   res.json({ success: true, data: order });
 });
 
-module.exports = { confirmSalesOrder };
+// @desc  Generate the customer invoice for a sales order (one invoice per
+//        order - blocked if one already exists). Due date defaults to 30
+//        days out unless overridden in the request body.
+// @route POST /api/sales-orders/:id/generate-invoice
+// @body  { dueDate?, invoiceNumber? }
+const generateInvoiceForSalesOrder = asyncHandler(async (req, res) => {
+  const order = await SalesOrder.findById(req.params.id);
+  if (!order) {
+    res.status(404);
+    throw new Error('Sales order not found');
+  }
+
+  const existing = await Invoice.findOne({ salesOrder: order._id });
+  if (existing) {
+    res.status(400);
+    throw new Error(`Invoice ${existing.invoiceNumber} already exists for this order`);
+  }
+
+  const dueDate = req.body.dueDate ? new Date(req.body.dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const invoiceNumber = req.body.invoiceNumber || `INV-${order.orderNumber}`;
+
+  const invoice = await Invoice.create({
+    invoiceNumber,
+    salesOrder: order._id,
+    customer: order.customer,
+    amount: order.grandTotal,
+    dueDate,
+    createdBy: req.user._id,
+  });
+
+  await postInvoiceLedgerEntry(invoice, req.user._id, ` (from order ${order.orderNumber})`);
+
+  res.status(201).json({ success: true, data: invoice });
+});
+
+module.exports = { confirmSalesOrder, generateInvoiceForSalesOrder };

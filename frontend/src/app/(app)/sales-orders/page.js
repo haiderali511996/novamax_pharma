@@ -66,10 +66,8 @@ const fields = [
   { name: 'notes', label: 'Notes', type: 'textarea' },
 ];
 
-function ConfirmButton({ item, reload, setError }) {
+function SalesOrderActions({ item, reload, setError }) {
   const [busy, setBusy] = useState(false);
-
-  if (item.stockApplied || item.status === 'cancelled') return null;
 
   async function handleConfirm() {
     if (!confirm(`Confirm order ${item.orderNumber} and deduct stock from its warehouse?`)) return;
@@ -84,10 +82,33 @@ function ConfirmButton({ item, reload, setError }) {
     }
   }
 
+  async function handleGenerateInvoice() {
+    setBusy(true);
+    setError('');
+    try {
+      const { data } = await api.post(`/sales-orders/${item._id}/generate-invoice`);
+      alert(`Invoice ${data.invoiceNumber} created for $${data.amount}`);
+      await reload();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <button onClick={handleConfirm} disabled={busy} className="mr-3 text-blue-700 hover:underline disabled:opacity-50">
-      {busy ? 'Confirming...' : 'Confirm & Deduct Stock'}
-    </button>
+    <>
+      {!item.stockApplied && item.status !== 'cancelled' && (
+        <button onClick={handleConfirm} disabled={busy} className="mr-3 text-blue-700 hover:underline disabled:opacity-50">
+          {busy ? 'Working...' : 'Confirm & Deduct Stock'}
+        </button>
+      )}
+      {item.stockApplied && (
+        <button onClick={handleGenerateInvoice} disabled={busy} className="mr-3 text-purple-700 hover:underline disabled:opacity-50">
+          {busy ? 'Working...' : 'Generate Invoice'}
+        </button>
+      )}
+    </>
   );
 }
 
@@ -98,7 +119,7 @@ export default function SalesOrdersPage() {
       endpoint="/sales-orders"
       columns={columns}
       fields={fields}
-      renderRowActions={(item, ctx) => <ConfirmButton item={item} {...ctx} />}
+      renderRowActions={(item, ctx) => <SalesOrderActions item={item} {...ctx} />}
     />
   );
 }
