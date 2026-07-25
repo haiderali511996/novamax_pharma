@@ -3,18 +3,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import LineItemsEditor from './LineItemsEditor';
+import ReturnItemsEditor from './ReturnItemsEditor';
 
 function getNested(obj, path) {
   return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 }
 
-function AsyncSelectField({ field, value, onChange }) {
+function AsyncSelectField({ field, value, onChange, formData }) {
   const [options, setOptions] = useState([]);
+  // endpoint can be a plain string, or a function(formData) => string for
+  // fields whose source list depends on another field (e.g. "party"
+  // depending on the chosen party type).
+  const endpoint = typeof field.endpoint === 'function' ? field.endpoint(formData) : field.endpoint;
 
   useEffect(() => {
+    if (!endpoint) {
+      setOptions([]);
+      return undefined;
+    }
     let active = true;
     api
-      .get(field.endpoint, { limit: 200 })
+      .get(endpoint, { limit: 200 })
       .then(({ data }) => {
         if (active) setOptions(data);
       })
@@ -22,14 +31,15 @@ function AsyncSelectField({ field, value, onChange }) {
     return () => {
       active = false;
     };
-  }, [field.endpoint]);
+  }, [endpoint]);
 
   return (
     <select
       required={field.required}
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+      disabled={!endpoint}
+      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none disabled:bg-slate-100"
     >
       <option value="">Select {field.label}</option>
       {options.map((opt) => (
@@ -80,15 +90,18 @@ function MultiSelectAsyncField({ field, value, onChange }) {
   );
 }
 
-function FormField({ field, value, onChange, onBulkChange }) {
+function FormField({ field, value, onChange, onBulkChange, formData }) {
   if (field.type === 'line-items') {
     return <LineItemsEditor field={field} value={value} onBulkChange={onBulkChange} />;
+  }
+  if (field.type === 'return-items') {
+    return <ReturnItemsEditor field={field} value={value} onBulkChange={onBulkChange} />;
   }
   if (field.type === 'multiselect-async') {
     return <MultiSelectAsyncField field={field} value={value} onChange={onChange} />;
   }
   if (field.type === 'select-async') {
-    return <AsyncSelectField field={field} value={value} onChange={onChange} />;
+    return <AsyncSelectField field={field} value={value} onChange={onChange} formData={formData} />;
   }
   if (field.type === 'select') {
     return (
@@ -196,7 +209,7 @@ export default function ResourceManager({
     const initial = {};
     fields.forEach((f) => {
       if (f.type === 'checkbox') initial[f.name] = false;
-      else if (f.type === 'line-items' || f.type === 'multiselect-async') initial[f.name] = [];
+      else if (f.type === 'line-items' || f.type === 'return-items' || f.type === 'multiselect-async') initial[f.name] = [];
       else if (f.computed) initial[f.name] = 0;
       else initial[f.name] = '';
     });
@@ -369,6 +382,7 @@ export default function ResourceManager({
                       value={formData[f.name]}
                       onChange={(v) => setFormData((prev) => ({ ...prev, [f.name]: v }))}
                       onBulkChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+                      formData={formData}
                     />
                   </div>
                 ))}

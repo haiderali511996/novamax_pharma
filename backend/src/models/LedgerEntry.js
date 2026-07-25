@@ -7,13 +7,14 @@ const mongoose = require('mongoose');
 // Balance is always computed as running sum(debit) - sum(credit): debit
 // always increases the balance, credit always decreases it. What the
 // balance *means* depends on the party type:
-//   customer     - debit = invoice raised (they owe us more), credit = payment received -> balance = amount owed BY customer
+//   customer     - debit = invoice raised (they owe us more), credit = payment/return received -> balance = amount owed BY customer
+//   distributor  - debit = invoice raised (they owe us more), credit = payment/return received -> balance = amount owed BY distributor
 //   manufacturer - debit = bill/purchase received (we owe them more), credit = payment made -> balance = amount owed TO manufacturer
 //   employee     - debit = advance/loan given (they owe us), credit = salary paid / repayment -> balance = net advance owed BY employee
 //
 // The UI labels debit/credit per party type so each statement reads naturally.
-const PARTY_TYPES = ['customer', 'manufacturer', 'employee'];
-const PARTY_MODELS = { customer: 'Customer', manufacturer: 'Manufacturer', employee: 'Employee' };
+const PARTY_TYPES = ['customer', 'distributor', 'manufacturer', 'employee'];
+const PARTY_MODELS = { customer: 'Customer', distributor: 'Distributor', manufacturer: 'Manufacturer', employee: 'Employee' };
 
 const ledgerEntrySchema = new mongoose.Schema(
   {
@@ -25,7 +26,7 @@ const ledgerEntrySchema = new mongoose.Schema(
     amount: { type: Number, required: true, min: 0 },
     description: { type: String, required: true, trim: true },
     reference: { type: String, trim: true },
-    source: { type: String, enum: ['manual', 'invoice', 'payroll'], default: 'manual' },
+    source: { type: String, enum: ['manual', 'invoice', 'payroll', 'return'], default: 'manual' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
