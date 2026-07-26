@@ -85,7 +85,38 @@ cd backend
 npm test
 ```
 
-Runs the full Jest + Supertest suite (42 tests across 11 files) against an isolated in-memory MongoDB per test file — no external database needed. A GitHub Actions workflow (`.github/workflows/ci.yml`) runs this plus the frontend build on every push/PR.
+Runs the full Jest + Supertest suite (59 tests across 13 files) against an isolated in-memory MongoDB per test file — no external database needed. A GitHub Actions workflow (`.github/workflows/ci.yml`) runs this plus the frontend build on every push/PR.
+
+## Deploying to production (erp.novamaxpharma.com)
+
+This uses MongoDB Atlas (not the local `mongo` container) and nginx as a reverse
+proxy in front of the two app containers.
+
+1. **Atlas**: Network Access must allow the production server's IP (or
+   `0.0.0.0/0` if the server's IP isn't static). Database user/password are
+   already in the connection string.
+2. **On the server**: install Docker + Docker Compose, clone this repo, then
+   copy `.env.production.example` to `.env` (same directory as
+   `docker-compose.prod.yml`) and fill in `MONGO_URI` / `JWT_SECRET` (generate
+   one with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`).
+   `.env` is gitignored — it never gets committed.
+3. **Build and start**:
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d --build
+   ```
+   The backend binds to `127.0.0.1:5000` and the frontend to `127.0.0.1:3000` —
+   neither is exposed to the internet directly; nginx is the only public entry
+   point.
+4. **DNS**: point `erp.novamaxpharma.com`'s A record at the server's IP.
+5. **nginx + TLS**: copy `deploy/nginx.conf` to
+   `/etc/nginx/sites-available/erp.novamaxpharma.com`, symlink it into
+   `sites-enabled`, `nginx -t && systemctl reload nginx`, then run
+   `certbot --nginx -d erp.novamaxpharma.com` to get HTTPS (certbot rewrites
+   the config to redirect HTTP → HTTPS).
+6. **Seed the first admin user**:
+   ```bash
+   docker compose -f docker-compose.prod.yml exec backend node src/utils/seed.js
+   ```
 
 ## Security notes
 
