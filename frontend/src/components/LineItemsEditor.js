@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 function emptyRow() {
   return { product: '', quantity: 1, unitPrice: 0, taxRate: 0 };
@@ -178,7 +179,7 @@ export default function LineItemsEditor({ field, value, onBulkChange }) {
                   </td>
                 )}
                 <td className="whitespace-nowrap px-2 py-1.5 text-slate-700">
-                  ${(lineBase + lineTax).toFixed(2)}
+                  {formatPKR(lineBase + lineTax)}
                 </td>
                 <td className="px-2 py-1.5 text-right">
                   <button
@@ -199,15 +200,15 @@ export default function LineItemsEditor({ field, value, onBulkChange }) {
           + Add item
         </button>
         <div className="text-xs text-slate-600">
-          Subtotal: <span className="font-semibold">${totals.subTotal.toFixed(2)}</span>
+          Subtotal: <span className="font-semibold">{formatPKR(totals.subTotal)}</span>
           {showTax && (
             <>
               {' '}
-              &nbsp;Tax: <span className="font-semibold">${totals.taxTotal.toFixed(2)}</span>
+              &nbsp;Tax: <span className="font-semibold">{formatPKR(totals.taxTotal)}</span>
             </>
           )}
           {' '}
-          &nbsp;Total: <span className="font-semibold">${totals.grandTotal.toFixed(2)}</span>
+          &nbsp;Total: <span className="font-semibold">{formatPKR(totals.grandTotal)}</span>
         </div>
       </div>
     </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import ResourceManager from '@/components/ResourceManager';
+import { formatPKR } from '@/lib/currency';
 
 const columns = [
   { key: 'name', label: 'Name' },
   { key: 'sku', label: 'SKU' },
   { key: 'category', label: 'Category' },
   { key: 'manufacturer.name', label: 'Manufacturer' },
-  { key: 'sellingPrice', label: 'Price', render: (i) => `$${i.sellingPrice}` },
+  { key: 'sellingPrice', label: 'Price', render: (i) => formatPKR(i.sellingPrice) },
   { key: 'reorderLevel', label: 'Reorder Level' },
 ];
 

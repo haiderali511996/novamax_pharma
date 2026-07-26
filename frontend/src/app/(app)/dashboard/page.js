@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { formatPKR } from '@/lib/currency';
 
 const CARDS = [
   { key: 'products', label: 'Active Products', color: 'bg-emerald-50 text-emerald-700' },
@@ -48,7 +49,7 @@ export default function DashboardPage() {
             <p className={`mt-2 inline-block rounded px-2 py-1 text-2xl font-bold ${card.color}`}>
               {stats
                 ? card.currency
-                  ? `$${Number(stats[card.key]).toLocaleString()}`
+                  ? formatPKR(stats[card.key])
                   : card.percent
                   ? `${stats[card.key]}%`
                   : stats[card.key]
@@ -62,10 +63,10 @@ export default function DashboardPage() {
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Top Referring Doctor</p>
           <p className="mt-1 text-lg font-semibold text-slate-800">
-            {stats.topDoctor.name} <span className="font-normal text-slate-500">— ${stats.topDoctor.totalSales.toLocaleString()} in referred sales</span>
+            {stats.topDoctor.name} <span className="font-normal text-slate-500">— {formatPKR(stats.topDoctor.totalSales)} in referred sales</span>
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            Paid so far: ${Number(stats.doctorCommissionPaid).toLocaleString()} of ${Number(stats.doctorCommissionExpense).toLocaleString()}{' '}
+            Paid so far: {formatPKR(stats.doctorCommissionPaid)} of {formatPKR(stats.doctorCommissionExpense)}{' '}
             earned. See Reports &gt; Doctor Commissions for the full ranking.
           </p>
         </div>

@@ -11,6 +11,7 @@ const ctrl = createCrudController(SalesOrder, {
     { path: 'warehouse', select: 'name code' },
     { path: 'salesRep', select: 'name employeeId' },
     { path: 'referringDoctor', select: 'name incentiveType commissionPercent discountPercent' },
+    { path: 'territory', select: 'name' },
     { path: 'items.product', select: 'name sku' },
     { path: 'items.batch', select: 'batchNumber expiryDate' },
   ],

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const columns = [
   { key: 'orderNumber', label: 'Order #' },
@@ -10,6 +11,7 @@ const columns = [
   { key: 'warehouse.name', label: 'Warehouse' },
   { key: 'salesRep.name', label: 'Sales Rep' },
   { key: 'referringDoctor.name', label: 'Referring Doctor' },
+  { key: 'territory.name', label: 'Area/Territory' },
   { key: 'referralLocation', label: 'Referral Location' },
   {
     key: 'status',
@@ -25,7 +27,7 @@ const columns = [
       </span>
     ),
   },
-  { key: 'grandTotal', label: 'Total', render: (i) => `$${i.grandTotal}` },
+  { key: 'grandTotal', label: 'Total', render: (i) => formatPKR(i.grandTotal) },
   { key: 'orderDate', label: 'Date', render: (i) => new Date(i.orderDate).toLocaleDateString() },
 ];
 
@@ -61,6 +63,13 @@ const fields = [
     endpoint: '/doctors',
     optionLabel: (d) =>
       `${d.name} (${d.incentiveType === 'cash_commission' ? `${d.commissionPercent}% commission` : `${d.discountPercent}% discount`})`,
+  },
+  {
+    name: 'territory',
+    label: 'Area/Territory (drives which area-specific doctor commission rate applies, if any)',
+    type: 'select-async',
+    endpoint: '/territories',
+    optionLabel: (t) => t.name,
   },
   {
     name: 'referralLocation',
@@ -109,7 +118,7 @@ function SalesOrderActions({ item, reload, setError }) {
     setError('');
     try {
       const { data } = await api.post(`/sales-orders/${item._id}/generate-invoice`);
-      alert(`Invoice ${data.invoiceNumber} created for $${data.amount}`);
+      alert(`Invoice ${data.invoiceNumber} created for ${formatPKR(data.amount)}`);
       await reload();
     } catch (err) {
       setError(err.message);

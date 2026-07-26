@@ -12,18 +12,25 @@ const { logAudit } = require('../utils/auditLogger');
 // cut as a payable - a debit on the doctor's ledger (we owe them more).
 // Product-discount doctors get nothing posted here: their incentive is
 // already baked into the line item prices the pharmacy paid.
+//
+// The commission % is NOT fixed for the doctor everywhere - it can vary by
+// area, so the rate is resolved for the order's specific territory (falling
+// back to the doctor's default rate if that area has no override).
 async function postDoctorCommissionIfApplicable(order, invoice, userId) {
   if (!order.referringDoctor) return;
   const doctor = await Doctor.findById(order.referringDoctor);
-  if (!doctor || doctor.incentiveType !== 'cash_commission' || !doctor.commissionPercent) return;
+  if (!doctor || doctor.incentiveType !== 'cash_commission') return;
 
-  const commissionAmount = Math.round((invoice.amount * doctor.commissionPercent) / 100 * 100) / 100;
+  const { commissionPercent } = doctor.getRateForTerritory(order.territory);
+  if (!commissionPercent) return;
+
+  const commissionAmount = Math.round((invoice.amount * commissionPercent) / 100 * 100) / 100;
   await LedgerEntry.create({
     partyType: 'doctor',
     party: doctor._id,
     type: 'debit',
     amount: commissionAmount,
-    description: `Commission (${doctor.commissionPercent}%) on invoice ${invoice.invoiceNumber}`,
+    description: `Commission (${commissionPercent}%) on invoice ${invoice.invoiceNumber}`,
     reference: invoice.invoiceNumber,
     source: 'invoice',
     createdBy: userId,

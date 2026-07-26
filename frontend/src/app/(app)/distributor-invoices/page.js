@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ResourceManager from '@/components/ResourceManager';
+import { formatPKR } from '@/lib/currency';
 
 const STATUS_OPTIONS = [
   { value: 'sale_based', label: 'Sale Based (nothing paid yet)' },
@@ -16,8 +17,8 @@ const columns = [
   { key: 'distributor.name', label: 'Distributor' },
   { key: 'pharmacyName', label: 'Pharmacy' },
   { key: 'invoiceDate', label: 'Invoice Date', render: (i) => new Date(i.invoiceDate).toLocaleDateString() },
-  { key: 'amount', label: 'Amount', render: (i) => `$${i.amount}` },
-  { key: 'amountPaid', label: 'Paid', render: (i) => `$${i.amountPaid}` },
+  { key: 'amount', label: 'Amount', render: (i) => formatPKR(i.amount) },
+  { key: 'amountPaid', label: 'Paid', render: (i) => formatPKR(i.amountPaid) },
   {
     key: 'status',
     label: 'Status',

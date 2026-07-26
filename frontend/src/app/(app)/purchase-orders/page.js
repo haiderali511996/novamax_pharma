@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const columns = [
   { key: 'poNumber', label: 'PO #' },
@@ -23,7 +24,7 @@ const columns = [
       </span>
     ),
   },
-  { key: 'grandTotal', label: 'Total', render: (i) => `$${i.grandTotal}` },
+  { key: 'grandTotal', label: 'Total', render: (i) => formatPKR(i.grandTotal) },
   { key: 'orderDate', label: 'Date', render: (i) => new Date(i.orderDate).toLocaleDateString() },
 ];
 

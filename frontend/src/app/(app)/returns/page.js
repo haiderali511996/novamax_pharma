@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const REASON_LABELS = {
   unsold_slow_moving: 'Unsold / slow-moving',
@@ -27,7 +28,7 @@ const columns = [
       </span>
     ),
   },
-  { key: 'totalAmount', label: 'Amount', render: (i) => `$${i.totalAmount}` },
+  { key: 'totalAmount', label: 'Amount', render: (i) => formatPKR(i.totalAmount) },
   { key: 'status', label: 'Status' },
   { key: 'createdAt', label: 'Date', render: (i) => new Date(i.createdAt).toLocaleDateString() },
 ];

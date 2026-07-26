@@ -10,11 +10,21 @@ const columns = [
   { key: 'assignedRep.name', label: 'Assigned Rep' },
   {
     key: 'incentiveType',
-    label: 'Incentive',
+    label: 'Default Incentive',
     render: (d) =>
       d.incentiveType === 'cash_commission'
         ? `${d.commissionPercent}% cash commission`
         : `${d.discountPercent}% product discount`,
+  },
+  {
+    key: 'areaRates',
+    label: 'Area-Specific Rates',
+    render: (d) =>
+      d.areaRates?.length
+        ? d.areaRates
+            .map((r) => `${r.territory?.name || 'Unknown area'}: ${d.incentiveType === 'cash_commission' ? r.commissionPercent : r.discountPercent}%`)
+            .join(', ')
+        : 'Same rate everywhere',
   },
 ];
 
@@ -44,13 +54,19 @@ const fields = [
   },
   {
     name: 'commissionPercent',
-    label: 'Commission % (e.g. 20 for "20K PKR per 1 Lac sales")',
+    label: 'Default Commission % (e.g. 20 for "20K PKR per 1 Lac sales")',
     type: 'number',
   },
   {
     name: 'discountPercent',
-    label: 'Product Discount % off TP (e.g. 20, 25, 50)',
+    label: 'Default Product Discount % off TP (e.g. 20, 25, 50)',
     type: 'number',
+  },
+  {
+    name: 'areaRates',
+    label:
+      'Area-Specific Rates (this doctor\'s commission/discount is NOT fixed - it can differ per territory; leave a territory out to use the default rate above)',
+    type: 'area-rates',
   },
   { name: 'notes', label: 'Notes', type: 'textarea' },
   { name: 'isActive', label: 'Active', type: 'checkbox' },

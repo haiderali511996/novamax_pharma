@@ -12,6 +12,7 @@ const License = require('../models/License');
 const Distributor = require('../models/Distributor');
 const Notification = require('../models/Notification');
 const LedgerEntry = require('../models/LedgerEntry');
+const Doctor = require('../models/Doctor');
 
 // @desc  Aggregate key stats across all modules for the dashboard home page
 // @route GET /api/dashboard/summary
@@ -54,29 +55,37 @@ const getSummary = asyncHandler(async (req, res) => {
     Notification.countDocuments({ isRead: false }),
   ]);
 
-  const [companyTotalResult, doctorSales, commissionPaidResult] = await Promise.all([
+  // Commission % can vary by area (Doctor.areaRates), so it's resolved per
+  // territory in JS rather than as a flat $multiply in the pipeline.
+  const [companyTotalResult, salesByDoctorTerritory, commissionPaidResult] = await Promise.all([
     SalesOrder.aggregate([{ $match: { stockApplied: true } }, { $group: { _id: null, total: { $sum: '$grandTotal' } } }]),
     SalesOrder.aggregate([
       { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
-      { $group: { _id: '$referringDoctor', totalSales: { $sum: '$grandTotal' } } },
-      { $lookup: { from: 'doctors', localField: '_id', foreignField: '_id', as: 'doctor' } },
-      { $unwind: '$doctor' },
-      {
-        $addFields: {
-          commissionEarned: {
-            $cond: [
-              { $eq: ['$doctor.incentiveType', 'cash_commission'] },
-              { $multiply: ['$totalSales', { $divide: ['$doctor.commissionPercent', 100] }] },
-              0,
-            ],
-          },
-        },
-      },
-      { $project: { doctorName: '$doctor.name', totalSales: 1, commissionEarned: 1 } },
-      { $sort: { totalSales: -1 } },
+      { $group: { _id: { doctor: '$referringDoctor', territory: '$territory' }, totalSales: { $sum: '$grandTotal' } } },
     ]),
     LedgerEntry.aggregate([{ $match: { partyType: 'doctor', type: 'credit' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
   ]);
+
+  const salesById = new Map();
+  for (const r of salesByDoctorTerritory) {
+    const key = String(r._id.doctor);
+    if (!salesById.has(key)) salesById.set(key, { totalSales: 0, byTerritory: [] });
+    const agg = salesById.get(key);
+    agg.totalSales += r.totalSales;
+    agg.byTerritory.push({ territoryId: r._id.territory, totalSales: r.totalSales });
+  }
+
+  const doctors = await Doctor.find({ _id: { $in: [...salesById.keys()] } });
+  const doctorSales = doctors
+    .map((doctor) => {
+      const agg = salesById.get(String(doctor._id));
+      const commissionEarned =
+        doctor.incentiveType === 'cash_commission'
+          ? agg.byTerritory.reduce((sum, t) => sum + (t.totalSales * doctor.getRateForTerritory(t.territoryId).commissionPercent) / 100, 0)
+          : 0;
+      return { doctorName: doctor.name, totalSales: agg.totalSales, commissionEarned };
+    })
+    .sort((a, b) => b.totalSales - a.totalSales);
 
   const totalCompanySales = companyTotalResult[0]?.total || 0;
   const totalDoctorReferredSales = doctorSales.reduce((sum, d) => sum + d.totalSales, 0);

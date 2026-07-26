@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ResourceManager from '@/components/ResourceManager';
+import { formatPKR } from '@/lib/currency';
 
 const STATUS_OPTIONS = [
   { value: 'sale_based', label: 'Sale Based (nothing paid yet)' },
@@ -14,8 +15,8 @@ const STATUS_LABELS = { sale_based: 'Sale Based', partially_paid: 'Partially Pai
 const columns = [
   { key: 'invoiceNumber', label: 'Invoice #' },
   { key: 'customer.name', label: 'Customer' },
-  { key: 'amount', label: 'Amount', render: (i) => `$${i.amount}` },
-  { key: 'amountPaid', label: 'Paid', render: (i) => `$${i.amountPaid}` },
+  { key: 'amount', label: 'Amount', render: (i) => formatPKR(i.amount) },
+  { key: 'amountPaid', label: 'Paid', render: (i) => formatPKR(i.amountPaid) },
   {
     key: 'status',
     label: 'Status',
@@ -48,7 +49,7 @@ const fields = [
     label: 'Sales Order (optional)',
     type: 'select-async',
     endpoint: '/sales-orders',
-    optionLabel: (o) => `${o.orderNumber} - $${o.grandTotal}`,
+    optionLabel: (o) => `${o.orderNumber} - ${formatPKR(o.grandTotal)}`,
   },
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'amountPaid', label: 'Amount Paid', type: 'number' },

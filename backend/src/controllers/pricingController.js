@@ -5,11 +5,12 @@ const Customer = require('../models/Customer');
 const { calculateCascadingPrice } = require('../utils/pricing');
 
 // @desc  Quote the cascading trade-discount price for a product, optionally
-//        attributed to a referring doctor and/or a specific pharmacy
+//        attributed to a referring doctor (in a given territory - the
+//        doctor's discount % can vary by area) and/or a specific pharmacy
 //        customer. Used by the sales-order builder to prefill unit price.
-// @route GET /api/pricing/quote?product=<id>&doctor=<id>&customer=<id>
+// @route GET /api/pricing/quote?product=<id>&doctor=<id>&territory=<id>&customer=<id>
 const getPriceQuote = asyncHandler(async (req, res) => {
-  const { product: productId, doctor: doctorId, customer: customerId } = req.query;
+  const { product: productId, doctor: doctorId, territory: territoryId, customer: customerId } = req.query;
   if (!productId) {
     res.status(400);
     throw new Error('product query param is required');
@@ -25,7 +26,7 @@ const getPriceQuote = asyncHandler(async (req, res) => {
   if (doctorId) {
     const doctor = await Doctor.findById(doctorId);
     if (doctor && doctor.incentiveType === 'product_discount') {
-      doctorDiscountPercent = doctor.discountPercent;
+      doctorDiscountPercent = doctor.getRateForTerritory(territoryId).discountPercent;
     }
   }
 

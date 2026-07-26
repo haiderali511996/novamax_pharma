@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const CATEGORIES = [
   { value: '', label: 'All Categories' },
@@ -62,7 +63,7 @@ export default function ExpenseLedgerPage() {
           ))}
         </select>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-sm font-semibold text-emerald-800">
-          Total: ${total.toFixed(2)}
+          Total: {formatPKR(total)}
         </div>
       </div>
 
@@ -98,8 +99,8 @@ export default function ExpenseLedgerPage() {
                   <td className="px-3 py-2 text-slate-700">{new Date(exp.date).toLocaleDateString()}</td>
                   <td className="px-3 py-2 text-slate-700">{exp.title}</td>
                   <td className="px-3 py-2 text-slate-700">{CATEGORY_LABELS[exp.category] || exp.category}</td>
-                  <td className="px-3 py-2 text-right text-slate-700">${exp.amount.toFixed(2)}</td>
-                  <td className="px-3 py-2 text-right font-medium text-slate-800">${exp.running.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-right text-slate-700">{formatPKR(exp.amount)}</td>
+                  <td className="px-3 py-2 text-right font-medium text-slate-800">{formatPKR(exp.running)}</td>
                 </tr>
               ))
             )}

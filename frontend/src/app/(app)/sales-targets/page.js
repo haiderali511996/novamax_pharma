@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const columns = [
   { key: 'employee.name', label: 'Sales Rep' },
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
-  { key: 'targetAmount', label: 'Target', render: (i) => `$${i.targetAmount}` },
+  { key: 'targetAmount', label: 'Target', render: (i) => formatPKR(i.targetAmount) },
 ];
 
 const fields = [
@@ -64,10 +65,10 @@ function ProgressButton({ item }) {
             {progress ? (
               <div className="space-y-2 text-sm">
                 <p>
-                  Target: <span className="font-semibold">${progress.target.targetAmount.toFixed(2)}</span>
+                  Target: <span className="font-semibold">{formatPKR(progress.target.targetAmount)}</span>
                 </p>
                 <p>
-                  Achieved (confirmed orders): <span className="font-semibold">${progress.achieved.toFixed(2)}</span>
+                  Achieved (confirmed orders): <span className="font-semibold">{formatPKR(progress.achieved)}</span>
                 </p>
                 <p>Orders counted: {progress.orderCount}</p>
                 <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-slate-100">

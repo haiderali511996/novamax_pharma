@@ -1,12 +1,13 @@
 'use client';
 
 import ResourceManager from '@/components/ResourceManager';
+import { formatPKR } from '@/lib/currency';
 
 const columns = [
   { key: 'employee.name', label: 'Employee' },
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
-  { key: 'netPay', label: 'Net Pay', render: (i) => `$${i.netPay}` },
+  { key: 'netPay', label: 'Net Pay', render: (i) => formatPKR(i.netPay) },
   { key: 'status', label: 'Status' },
 ];
 

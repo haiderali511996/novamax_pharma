@@ -320,4 +320,115 @@ describe('Doctor commission and cascading discount pricing', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(ledger.body.data.closingBalance).toBe(40000);
   });
+
+  test('a doctor commission rate can vary by area - not fixed company-wide', async () => {
+    const { token } = await registerUser();
+    const warehouse = await createWarehouse(token);
+    const product = await createProduct(token, { sellingPrice: 100 });
+    const customer = await createCustomer(token);
+    await createBatch(token, { product: product._id, warehouse: warehouse._id, quantity: 5000 });
+
+    const territoryA = await request(app)
+      .post('/api/territories')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Karachi South' });
+    const territoryB = await request(app)
+      .post('/api/territories')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Karachi North' });
+    const territoryC = await request(app)
+      .post('/api/territories')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Lahore Central' });
+
+    // Default rate 10%, but this doctor negotiated 20% in Karachi South and
+    // 15% in Karachi North. Lahore Central has no override - falls back to 10%.
+    const doctor = await request(app)
+      .post('/api/doctors')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Dr. Area Variance',
+        incentiveType: 'cash_commission',
+        commissionPercent: 10,
+        areaRates: [
+          { territory: territoryA.body.data._id, commissionPercent: 20 },
+          { territory: territoryB.body.data._id, commissionPercent: 15 },
+        ],
+      });
+
+    async function placeOrder(orderNumber, territoryId, amount) {
+      const order = await request(app)
+        .post('/api/sales-orders')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          orderNumber,
+          customer: customer._id,
+          warehouse: warehouse._id,
+          referringDoctor: doctor.body.data._id,
+          territory: territoryId,
+          items: [{ product: product._id, quantity: amount / 100, unitPrice: 100, taxRate: 0, total: amount }],
+          subTotal: amount,
+          grandTotal: amount,
+        });
+      await request(app).post(`/api/sales-orders/${order.body.data._id}/confirm`).set('Authorization', `Bearer ${token}`);
+      await request(app).post(`/api/sales-orders/${order.body.data._id}/generate-invoice`).set('Authorization', `Bearer ${token}`);
+    }
+
+    await placeOrder('SO-AREA-A', territoryA.body.data._id, 100000); // 20% -> 20,000
+    await placeOrder('SO-AREA-B', territoryB.body.data._id, 100000); // 15% -> 15,000
+    await placeOrder('SO-AREA-C', territoryC.body.data._id, 100000); // no override -> default 10% -> 10,000
+
+    // Combined commission: 20,000 + 15,000 + 10,000 = 45,000 - each area at its own rate.
+    const ledger = await request(app)
+      .get(`/api/ledger-entries/statement?partyType=doctor&party=${doctor.body.data._id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(ledger.body.data.closingBalance).toBe(45000);
+
+    const report = await request(app).get('/api/reports/doctor-commissions').set('Authorization', `Bearer ${token}`);
+    const row = report.body.data.rows.find((r) => r.doctor === 'Dr. Area Variance');
+    expect(row.totalSales).toBe(300000);
+    expect(row.commissionEarned).toBe(45000);
+
+    const byArea = Object.fromEntries(row.byArea.map((a) => [a.territory, a]));
+    expect(byArea['Karachi South'].commissionPercent).toBe(20);
+    expect(byArea['Karachi South'].commissionEarned).toBe(20000);
+    expect(byArea['Karachi North'].commissionPercent).toBe(15);
+    expect(byArea['Karachi North'].commissionEarned).toBe(15000);
+    expect(byArea['Lahore Central'].commissionPercent).toBe(10);
+    expect(byArea['Lahore Central'].commissionEarned).toBe(10000);
+  });
+
+  test('pricing quote uses the area-specific discount for a product-discount doctor', async () => {
+    const { token } = await registerUser();
+    const product = await createProduct(token, { sellingPrice: 100 });
+
+    const territoryA = await request(app)
+      .post('/api/territories')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Area A' });
+    const territoryB = await request(app)
+      .post('/api/territories')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Area B' });
+
+    const doctor = await request(app)
+      .post('/api/doctors')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Dr. Area Discount',
+        incentiveType: 'product_discount',
+        discountPercent: 20,
+        areaRates: [{ territory: territoryA.body.data._id, discountPercent: 50 }],
+      });
+
+    const quoteAreaA = await request(app)
+      .get(`/api/pricing/quote?product=${product._id}&doctor=${doctor.body.data._id}&territory=${territoryA.body.data._id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(quoteAreaA.body.data.priceAfterDoctorDiscount).toBe(50); // 50% off TP in Area A
+
+    const quoteAreaB = await request(app)
+      .get(`/api/pricing/quote?product=${product._id}&doctor=${doctor.body.data._id}&territory=${territoryB.body.data._id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(quoteAreaB.body.data.priceAfterDoctorDiscount).toBe(80); // falls back to default 20% off TP in Area B
+  });
 });

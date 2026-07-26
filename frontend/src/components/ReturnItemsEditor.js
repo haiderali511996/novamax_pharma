@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 function emptyRow() {
   return { product: '', batch: '', quantity: 1, unitPrice: 0 };
@@ -125,7 +126,7 @@ export default function ReturnItemsEditor({ field, value, onBulkChange }) {
                   />
                 </td>
                 <td className="whitespace-nowrap px-2 py-1.5 text-slate-700">
-                  ${(Number(row.quantity || 0) * Number(row.unitPrice || 0)).toFixed(2)}
+                  {formatPKR(Number(row.quantity || 0) * Number(row.unitPrice || 0))}
                 </td>
                 <td className="px-2 py-1.5 text-right">
                   <button type="button" onClick={() => removeRow(index)} className="text-red-600 hover:underline">
@@ -142,7 +143,7 @@ export default function ReturnItemsEditor({ field, value, onBulkChange }) {
           + Add item
         </button>
         <div className="text-xs text-slate-600">
-          Total: <span className="font-semibold">${total.toFixed(2)}</span>
+          Total: <span className="font-semibold">{formatPKR(total)}</span>
         </div>
       </div>
     </div>

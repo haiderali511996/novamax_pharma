@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { exportToCSV } from '@/lib/csv';
+import { formatPKR } from '@/lib/currency';
 
 const REPORTS = [
   { key: 'stock-valuation', label: 'Stock Valuation' },
@@ -17,7 +18,7 @@ function StockValuationReport({ data }) {
   return (
     <div>
       <p className="mb-3 text-sm text-slate-600">
-        Total stock value: <span className="font-semibold">${data.totalValue.toFixed(2)}</span>
+        Total stock value: <span className="font-semibold">{formatPKR(data.totalValue)}</span>
       </p>
       <ReportTable
         rows={data.rows}
@@ -28,8 +29,8 @@ function StockValuationReport({ data }) {
           { key: 'manufacturer', label: 'Manufacturer' },
           { key: 'batchNumber', label: 'Batch' },
           { key: 'quantity', label: 'Qty' },
-          { key: 'costPrice', label: 'Cost Price', render: (r) => `$${r.costPrice}` },
-          { key: 'value', label: 'Value', render: (r) => `$${r.value.toFixed(2)}` },
+          { key: 'costPrice', label: 'Cost Price', render: (r) => formatPKR(r.costPrice) },
+          { key: 'value', label: 'Value', render: (r) => formatPKR(r.value) },
         ]}
         filename="stock-valuation"
       />
@@ -44,7 +45,7 @@ function AgedReceivablesReport({ data }) {
         {Object.entries(data.buckets).map(([bucket, amount]) => (
           <div key={bucket} className="rounded-md border border-slate-200 bg-white p-2">
             <p className="text-xs text-slate-400">{bucket}</p>
-            <p className="font-semibold text-slate-800">${amount.toFixed(2)}</p>
+            <p className="font-semibold text-slate-800">{formatPKR(amount)}</p>
           </div>
         ))}
       </div>
@@ -54,7 +55,7 @@ function AgedReceivablesReport({ data }) {
           { key: 'partyType', label: 'Type' },
           { key: 'party', label: 'Party' },
           { key: 'invoiceNumber', label: 'Invoice #' },
-          { key: 'balance', label: 'Balance', render: (r) => `$${r.balance.toFixed(2)}` },
+          { key: 'balance', label: 'Balance', render: (r) => formatPKR(r.balance) },
           { key: 'daysOverdue', label: 'Days Overdue' },
           { key: 'bucket', label: 'Bucket' },
         ]}
@@ -68,13 +69,13 @@ function AgedPayablesReport({ data }) {
   return (
     <div>
       <p className="mb-3 text-sm text-slate-600">
-        Total payable: <span className="font-semibold">${data.totalPayable.toFixed(2)}</span>
+        Total payable: <span className="font-semibold">{formatPKR(data.totalPayable)}</span>
       </p>
       <ReportTable
         rows={data.rows}
         columns={[
           { key: 'manufacturer', label: 'Manufacturer' },
-          { key: 'balance', label: 'Balance', render: (r) => `$${r.balance.toFixed(2)}` },
+          { key: 'balance', label: 'Balance', render: (r) => formatPKR(r.balance) },
           { key: 'daysOutstanding', label: 'Days Outstanding' },
         ]}
         filename="aged-payables"
@@ -90,7 +91,7 @@ function SalesByTerritoryReport({ data }) {
       columns={[
         { key: 'territory', label: 'Territory' },
         { key: 'orderCount', label: 'Orders' },
-        { key: 'totalSales', label: 'Total Sales', render: (r) => `$${r.totalSales.toFixed(2)}` },
+        { key: 'totalSales', label: 'Total Sales', render: (r) => formatPKR(r.totalSales) },
       ]}
       filename="sales-by-territory"
     />
@@ -107,20 +108,20 @@ function DoctorCommissionsReport({ data }) {
             <p className="text-xs text-slate-400">% of Business From Doctors</p>
             <p className="text-lg font-semibold text-violet-700">{summary.doctorReferredSalesPercent}%</p>
             <p className="text-xs text-slate-400">
-              ${summary.totalDoctorReferredSales.toFixed(0)} of ${summary.totalCompanySales.toFixed(0)}
+              {formatPKR(summary.totalDoctorReferredSales)} of {formatPKR(summary.totalCompanySales)}
             </p>
           </div>
           <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
             <p className="text-xs text-slate-400">Commission Expense (Earned)</p>
-            <p className="text-lg font-semibold text-rose-700">${summary.totalCommissionExpense.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-rose-700">{formatPKR(summary.totalCommissionExpense)}</p>
           </div>
           <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
             <p className="text-xs text-slate-400">Commission Paid</p>
-            <p className="text-lg font-semibold text-emerald-700">${summary.totalCommissionPaid.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-emerald-700">{formatPKR(summary.totalCommissionPaid)}</p>
           </div>
           <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
             <p className="text-xs text-slate-400">Still Owed to Doctors</p>
-            <p className="text-lg font-semibold text-amber-700">${summary.totalCommissionOwed.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-amber-700">{formatPKR(summary.totalCommissionOwed)}</p>
           </div>
         </div>
       )}
@@ -131,11 +132,29 @@ function DoctorCommissionsReport({ data }) {
           { key: 'doctor', label: 'Doctor' },
           {
             key: 'incentiveType',
-            label: 'Incentive',
+            label: 'Default Incentive',
             render: (r) => (r.incentiveType === 'cash_commission' ? `${r.commissionPercent}% commission` : `${r.discountPercent}% discount`),
           },
           { key: 'orderCount', label: 'Orders' },
-          { key: 'totalSales', label: 'Sales Referred', render: (r) => `$${r.totalSales.toFixed(2)}` },
+          { key: 'totalSales', label: 'Sales Referred', render: (r) => formatPKR(r.totalSales) },
+          {
+            key: 'byArea',
+            label: 'By Area (rate varies)',
+            render: (r) =>
+              r.byArea?.length ? (
+                <div className="space-y-0.5 text-xs">
+                  {r.byArea.map((a) => (
+                    <div key={a.territory}>
+                      {a.territory}: {formatPKR(a.totalSales)} @{' '}
+                      {r.incentiveType === 'cash_commission' ? `${a.commissionPercent}%` : `${a.discountPercent}%`}
+                      {r.incentiveType === 'cash_commission' && ` = ${formatPKR(a.commissionEarned)}`}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                '—'
+              ),
+          },
           {
             key: 'byLocation',
             label: 'By Location',
@@ -144,7 +163,7 @@ function DoctorCommissionsReport({ data }) {
                 <div className="space-y-0.5 text-xs">
                   {r.byLocation.map((l) => (
                     <div key={l.location}>
-                      {l.location}: ${l.totalSales.toFixed(0)}
+                      {l.location}: {formatPKR(l.totalSales)}
                     </div>
                   ))}
                 </div>
@@ -153,12 +172,12 @@ function DoctorCommissionsReport({ data }) {
               ),
           },
           { key: 'salesSharePercent', label: '% of Company Sales', render: (r) => `${r.salesSharePercent}%` },
-          { key: 'commissionEarned', label: 'Commission Earned', render: (r) => `$${r.commissionEarned.toFixed(2)}` },
-          { key: 'commissionPaid', label: 'Commission Paid', render: (r) => `$${r.commissionPaid.toFixed(2)}` },
+          { key: 'commissionEarned', label: 'Commission Earned', render: (r) => formatPKR(r.commissionEarned) },
+          { key: 'commissionPaid', label: 'Commission Paid', render: (r) => formatPKR(r.commissionPaid) },
           {
             key: 'balanceOwed',
             label: 'Balance Owed',
-            render: (r) => <span className={r.balanceOwed > 0 ? 'font-semibold text-red-700' : ''}>${r.balanceOwed.toFixed(2)}</span>,
+            render: (r) => <span className={r.balanceOwed > 0 ? 'font-semibold text-red-700' : ''}>{formatPKR(r.balanceOwed)}</span>,
           },
         ]}
         filename="doctor-commissions"
@@ -184,7 +203,7 @@ function ProfitLossReport({ data }) {
         {rows.map((r) => (
           <div key={r.label} className={`flex justify-between text-sm ${r.bold ? 'border-t pt-1 font-semibold' : ''}`}>
             <span>{r.label}</span>
-            <span className={r.value < 0 ? 'text-red-600' : 'text-slate-800'}>${r.value.toFixed(2)}</span>
+            <span className={r.value < 0 ? 'text-red-600' : 'text-slate-800'}>{formatPKR(r.value)}</span>
           </div>
         ))}
       </div>

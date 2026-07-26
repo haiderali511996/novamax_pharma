@@ -8,6 +8,7 @@ const ctrl = createCrudController(Doctor, {
   populate: [
     { path: 'territory', select: 'name' },
     { path: 'assignedRep', select: 'name' },
+    { path: 'areaRates.territory', select: 'name' },
   ],
   searchFields: ['name', 'specialization', 'hospitalClinic', 'phone'],
 });

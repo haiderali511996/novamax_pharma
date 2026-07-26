@@ -7,6 +7,7 @@ const SalesOrder = require('../models/SalesOrder');
 const Expense = require('../models/Expense');
 const StockMovement = require('../models/StockMovement');
 const Doctor = require('../models/Doctor');
+const Territory = require('../models/Territory');
 
 // @desc  Current stock valuation (quantity * cost price) per product/warehouse
 // @route GET /api/reports/stock-valuation
@@ -187,12 +188,26 @@ const getProfitAndLoss = asyncHandler(async (req, res) => {
 //        A doctor who sits at more than one place (e.g. a hospital in the
 //        morning, a clinic in the evening) is still ONE doctor with ONE
 //        commission total - business from every location they refer from
-//        rolls up together. `byLocation` just breaks that same total down
-//        by where each sale was referred from (see SalesOrder.referralLocation),
-//        it never changes the doctor-level totals or their commission.
+//        rolls up together. `byLocation` breaks that total down by venue
+//        (see SalesOrder.referralLocation) purely for display.
+//
+//        The commission/discount % is NOT fixed for a doctor company-wide -
+//        it can vary by area (Doctor.areaRates), so commission is computed
+//        PER TERRITORY and then summed. `byArea` shows exactly which rate
+//        applied in each territory and how much commission it earned there.
 // @route GET /api/reports/doctor-commissions
 const getDoctorCommissions = asyncHandler(async (req, res) => {
-  const [salesByDoctorLocation, companyTotalResult] = await Promise.all([
+  const [salesByDoctorTerritory, salesByDoctorLocation, companyTotalResult] = await Promise.all([
+    SalesOrder.aggregate([
+      { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
+      {
+        $group: {
+          _id: { doctor: '$referringDoctor', territory: '$territory' },
+          totalSales: { $sum: '$grandTotal' },
+          orderCount: { $sum: 1 },
+        },
+      },
+    ]),
     SalesOrder.aggregate([
       { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
       {
@@ -207,16 +222,27 @@ const getDoctorCommissions = asyncHandler(async (req, res) => {
   ]);
   const totalCompanySales = companyTotalResult[0]?.total || 0;
 
-  const salesById = new Map();
+  const locationById = new Map();
   for (const r of salesByDoctorLocation) {
     const key = String(r._id.doctor);
-    if (!salesById.has(key)) salesById.set(key, { totalSales: 0, orderCount: 0, byLocation: [] });
+    if (!locationById.has(key)) locationById.set(key, []);
+    locationById.get(key).push({ location: r._id.location, totalSales: r.totalSales, orderCount: r.orderCount });
+  }
+  locationById.forEach((arr) => arr.sort((a, b) => b.totalSales - a.totalSales));
+
+  const territoryIds = [...new Set(salesByDoctorTerritory.map((r) => r._id.territory).filter(Boolean).map(String))];
+  const territories = await Territory.find({ _id: { $in: territoryIds } });
+  const territoryNameById = new Map(territories.map((t) => [String(t._id), t.name]));
+
+  const salesById = new Map();
+  for (const r of salesByDoctorTerritory) {
+    const key = String(r._id.doctor);
+    if (!salesById.has(key)) salesById.set(key, { totalSales: 0, orderCount: 0, byTerritory: [] });
     const agg = salesById.get(key);
     agg.totalSales += r.totalSales;
     agg.orderCount += r.orderCount;
-    agg.byLocation.push({ location: r._id.location, totalSales: r.totalSales, orderCount: r.orderCount });
+    agg.byTerritory.push({ territoryId: r._id.territory, totalSales: r.totalSales, orderCount: r.orderCount });
   }
-  salesById.forEach((agg) => agg.byLocation.sort((a, b) => b.totalSales - a.totalSales));
 
   const doctors = await Doctor.find({ _id: { $in: [...salesById.keys()] } });
 
@@ -224,7 +250,23 @@ const getDoctorCommissions = asyncHandler(async (req, res) => {
   for (const doctor of doctors) {
     const sales = salesById.get(String(doctor._id));
     const isCash = doctor.incentiveType === 'cash_commission';
-    const commissionEarned = isCash ? Math.round(((sales.totalSales * doctor.commissionPercent) / 100) * 100) / 100 : 0;
+
+    const byArea = sales.byTerritory
+      .map((t) => {
+        const rate = doctor.getRateForTerritory(t.territoryId);
+        const areaCommission = isCash ? Math.round(((t.totalSales * rate.commissionPercent) / 100) * 100) / 100 : 0;
+        return {
+          territory: t.territoryId ? territoryNameById.get(String(t.territoryId)) || 'Unknown area' : 'Unspecified area',
+          totalSales: t.totalSales,
+          orderCount: t.orderCount,
+          commissionPercent: rate.commissionPercent,
+          discountPercent: rate.discountPercent,
+          commissionEarned: areaCommission,
+        };
+      })
+      .sort((a, b) => b.totalSales - a.totalSales);
+
+    const commissionEarned = Math.round(byArea.reduce((sum, a) => sum + a.commissionEarned, 0) * 100) / 100;
 
     const entries = await LedgerEntry.find({ partyType: 'doctor', party: doctor._id });
     const commissionPaid = entries.filter((e) => e.type === 'credit').reduce((sum, e) => sum + e.amount, 0);
@@ -236,7 +278,8 @@ const getDoctorCommissions = asyncHandler(async (req, res) => {
       incentiveType: doctor.incentiveType,
       totalSales: sales.totalSales,
       orderCount: sales.orderCount,
-      byLocation: sales.byLocation,
+      byLocation: locationById.get(String(doctor._id)) || [],
+      byArea,
       commissionPercent: doctor.commissionPercent,
       discountPercent: doctor.discountPercent,
       commissionEarned,

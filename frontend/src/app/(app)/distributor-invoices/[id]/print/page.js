@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const STATUS_LABELS = { sale_based: 'Sale Based', partially_paid: 'Partially Paid', fully_paid: 'Fully Paid' };
 
@@ -98,9 +99,9 @@ export default function DistributorInvoicePrintPage() {
                   <td className="py-1 text-right">{item.quantity}</td>
                   <td className="py-1">{item.batchNumber || '-'}</td>
                   <td className="py-1">{item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : '-'}</td>
-                  <td className="py-1 text-right">{item.unitPrice.toFixed(2)}</td>
+                  <td className="py-1 text-right">{formatPKR(item.unitPrice)}</td>
                   <td className="py-1 text-right">{item.taxRate || 0}%</td>
-                  <td className="py-1 text-right">{item.total.toFixed(2)}</td>
+                  <td className="py-1 text-right">{formatPKR(item.total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -111,15 +112,15 @@ export default function DistributorInvoicePrintPage() {
           <div className="w-56 space-y-1">
             <div className="flex justify-between border-t border-slate-400 pt-1 font-semibold">
               <span>Total:</span>
-              <span>${invoice.amount.toFixed(2)}</span>
+              <span>{formatPKR(invoice.amount)}</span>
             </div>
             <div className="flex justify-between">
               <span>Amount Paid:</span>
-              <span>${invoice.amountPaid.toFixed(2)}</span>
+              <span>{formatPKR(invoice.amountPaid)}</span>
             </div>
             <div className="flex justify-between border-t border-slate-400 pt-1 font-bold">
               <span>Balance Due:</span>
-              <span>${balance.toFixed(2)}</span>
+              <span>{formatPKR(balance)}</span>
             </div>
           </div>
         </div>

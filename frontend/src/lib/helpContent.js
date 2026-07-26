@@ -163,6 +163,15 @@ export const HELP_SECTIONS = [
         ],
       },
       {
+        heading: 'The rate is not fixed everywhere - it can vary by area',
+        body: [
+          'The same doctor can negotiate a different rate in different areas - e.g. 20% commission in Karachi South but only 15% in Karachi North. The Commission %/Discount % on the doctor\'s main record is just the DEFAULT, used for any area that has no override.',
+          'On the Doctors page, use "Area-Specific Rates" to add one row per territory with its own rate. Any territory left out simply uses the default.',
+          'When you create a Sales Order, pick the Area/Territory the sale belongs to - that is what tells the system which rate to apply. Get this field right or the commission for an area-specific doctor will fall back to their default rate instead.',
+          'Nothing here changes what the doctor\'s total commission looks like - it\'s still one doctor, one combined running balance on their ledger. The Doctor Commissions report shows a "By Area" column breaking down exactly how much came from each territory and at what rate.',
+        ],
+      },
+      {
         heading: 'How the price is actually calculated',
         body: [
           'Trade Price (TP) is the product\'s Selling Price. The discount cascade is:',

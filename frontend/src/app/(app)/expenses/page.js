@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceManager from '@/components/ResourceManager';
+import { formatPKR } from '@/lib/currency';
 
 const CATEGORY_OPTIONS = [
   { value: 'salaries', label: 'Salaries' },
@@ -14,7 +15,7 @@ const CATEGORY_LABELS = Object.fromEntries(CATEGORY_OPTIONS.map((c) => [c.value,
 const columns = [
   { key: 'title', label: 'Title' },
   { key: 'category', label: 'Category', render: (i) => CATEGORY_LABELS[i.category] || i.category },
-  { key: 'amount', label: 'Amount', render: (i) => `$${i.amount}` },
+  { key: 'amount', label: 'Amount', render: (i) => formatPKR(i.amount) },
   { key: 'paymentMethod', label: 'Payment Method' },
   { key: 'date', label: 'Date', render: (i) => new Date(i.date).toLocaleDateString() },
 ];

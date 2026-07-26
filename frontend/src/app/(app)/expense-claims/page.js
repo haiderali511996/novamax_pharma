@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 const columns = [
   { key: 'employee.name', label: 'Employee' },
   { key: 'title', label: 'Title' },
   { key: 'category', label: 'Category' },
-  { key: 'amount', label: 'Amount', render: (i) => `$${i.amount}` },
+  { key: 'amount', label: 'Amount', render: (i) => formatPKR(i.amount) },
   { key: 'status', label: 'Status' },
   { key: 'date', label: 'Date', render: (i) => new Date(i.date).toLocaleDateString() },
 ];

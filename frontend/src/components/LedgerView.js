@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { formatPKR } from '@/lib/currency';
 
 // Reusable running-balance statement for any ledger party type
 // (customer / manufacturer / employee). Debit/credit labels and the
@@ -126,15 +127,15 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs font-medium uppercase text-slate-400">{debitLabel} Total</p>
-              <p className="mt-1 text-lg font-bold text-slate-800">${statement.totalDebit.toFixed(2)}</p>
+              <p className="mt-1 text-lg font-bold text-slate-800">{formatPKR(statement.totalDebit)}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs font-medium uppercase text-slate-400">{creditLabel} Total</p>
-              <p className="mt-1 text-lg font-bold text-slate-800">${statement.totalCredit.toFixed(2)}</p>
+              <p className="mt-1 text-lg font-bold text-slate-800">{formatPKR(statement.totalCredit)}</p>
             </div>
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
               <p className="text-xs font-medium uppercase text-emerald-700">{balanceLabel}</p>
-              <p className="mt-1 text-lg font-bold text-emerald-800">${statement.closingBalance.toFixed(2)}</p>
+              <p className="mt-1 text-lg font-bold text-emerald-800">{formatPKR(statement.closingBalance)}</p>
             </div>
           </div>
 
@@ -166,12 +167,12 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
                         {row.reference && <span className="ml-1 text-xs text-slate-400">({row.reference})</span>}
                       </td>
                       <td className="px-3 py-2 text-right text-slate-700">
-                        {row.type === 'debit' ? `$${row.amount.toFixed(2)}` : ''}
+                        {row.type === 'debit' ? formatPKR(row.amount) : ''}
                       </td>
                       <td className="px-3 py-2 text-right text-slate-700">
-                        {row.type === 'credit' ? `$${row.amount.toFixed(2)}` : ''}
+                        {row.type === 'credit' ? formatPKR(row.amount) : ''}
                       </td>
-                      <td className="px-3 py-2 text-right font-medium text-slate-800">${row.balance.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right font-medium text-slate-800">{formatPKR(row.balance)}</td>
                       <td className="px-3 py-2 text-right">
                         {row.source === 'manual' && (
                           <button onClick={() => handleDeleteEntry(row._id)} className="text-red-600 hover:underline">

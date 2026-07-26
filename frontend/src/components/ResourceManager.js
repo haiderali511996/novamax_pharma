@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import LineItemsEditor from './LineItemsEditor';
 import ReturnItemsEditor from './ReturnItemsEditor';
+import AreaRatesEditor from './AreaRatesEditor';
 import { exportToCSV } from '@/lib/csv';
 import FileUploadField from './FileUploadField';
 
@@ -99,6 +100,9 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   }
   if (field.type === 'return-items') {
     return <ReturnItemsEditor field={field} value={value} onBulkChange={onBulkChange} />;
+  }
+  if (field.type === 'area-rates') {
+    return <AreaRatesEditor field={field} value={value} onBulkChange={onBulkChange} />;
   }
   if (field.type === 'multiselect-async') {
     return <MultiSelectAsyncField field={field} value={value} onChange={onChange} />;
@@ -220,7 +224,8 @@ export default function ResourceManager({
     const initial = {};
     fields.forEach((f) => {
       if (f.type === 'checkbox') initial[f.name] = false;
-      else if (f.type === 'line-items' || f.type === 'return-items' || f.type === 'multiselect-async') initial[f.name] = [];
+      else if (f.type === 'line-items' || f.type === 'return-items' || f.type === 'area-rates' || f.type === 'multiselect-async')
+        initial[f.name] = [];
       else if (f.computed) initial[f.name] = 0;
       else initial[f.name] = '';
     });
