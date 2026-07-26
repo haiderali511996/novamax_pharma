@@ -40,6 +40,7 @@ export const NAV_GROUPS = [
       { href: '/territories', label: 'Territories / Areas' },
       { href: '/distributors', label: 'Distributors' },
       { href: '/distributor-invoices', label: 'Distributor Invoices' },
+      { href: '/facilities', label: 'Facility Directory' },
     ],
   },
   {
@@ -47,6 +48,7 @@ export const NAV_GROUPS = [
     items: [
       { href: '/doctors', label: 'Doctors' },
       { href: '/field-visits', label: 'Doctor & Chemist Visits' },
+      { href: '/visit-schedules', label: 'Visit Schedules (Beat Plan)' },
       { href: '/sales-targets', label: 'Sales Targets' },
       { href: '/expense-claims', label: 'Expense Claims' },
     ],

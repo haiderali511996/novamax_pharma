@@ -214,7 +214,7 @@ export const HELP_SECTIONS = [
   {
     slug: 'field-force',
     label: 'Field Force (Medical Reps)',
-    intro: 'Doctor & chemist visits, sales targets, and expense claims for your reps.',
+    intro: 'Doctor & chemist visits, sales targets, expense claims, the facility directory, and visit schedules for your reps.',
     topics: [
       {
         heading: 'Doctor & Chemist Visits',
@@ -227,6 +227,22 @@ export const HELP_SECTIONS = [
         body: [
           'Set a monthly sales target per employee and track it against actual confirmed sales.',
           'Expense Claims let reps submit travel/field expenses with a receipt upload for approval.',
+        ],
+      },
+      {
+        heading: 'Facility Directory (Hospitals, Clinics & Pharmacies)',
+        body: [
+          'Under Distribution > Facility Directory, keep a list of every hospital, clinic, and pharmacy in each area/territory, with address, phone, contact person, and an optional Google Maps link (or latitude/longitude) so a rep can tap through for directions.',
+          'The fastest way to populate this in bulk is the "Import from CSV" box at the top of the page - export your own list of facilities (e.g. from Excel, or your own Google My Business data) as a CSV with columns name,type,territoryName,address,city,phone,contactPerson,latitude,longitude,googleMapsUrl,notes and upload it. Only "name" is required per row; a territory name that does not exist yet is created automatically, and rows sharing the same territory name are matched to the same territory instead of creating duplicates.',
+          'NovaMax does not auto-fetch or scrape Google Maps/Google My Business listings - Google\'s terms do not allow bulk-copying that data into a separate database. Add facilities from your own records instead (manually, or via the CSV import).',
+        ],
+      },
+      {
+        heading: 'Visit Schedules (Weekly/Monthly Beat Plan)',
+        body: [
+          'Under Field Force > Visit Schedules, set up a recurring plan for each rep or distributor worker: who they visit (a Customer, Distributor, or a Facility Directory entry), how often (weekly on a chosen day, or monthly on a chosen day-of-month), and the purpose - Re-take Order, Collect Invoice/Payment, both, or a plain visit.',
+          'A monthly schedule set to day 31 still fires in shorter months - it automatically falls back to the last real day of that month (e.g. the 28th/29th in February) instead of silently skipping it.',
+          'The "This Week\'s Beat Plan" tab shows a 7-day board of exactly which visits are due each day, so a rep (or their manager) can see the whole week\'s route at a glance instead of checking each schedule one by one.',
         ],
       },
     ],
