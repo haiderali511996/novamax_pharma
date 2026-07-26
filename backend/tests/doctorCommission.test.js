@@ -166,4 +166,103 @@ describe('Doctor commission and cascading discount pricing', () => {
     expect(row.commissionPaid).toBe(0);
     expect(row.balanceOwed).toBe(100);
   });
+
+  test('doctor-commissions report ranks doctors best-to-worst by business generated and totals a company-wide summary', async () => {
+    const { token } = await registerUser();
+    const warehouse = await createWarehouse(token);
+    const product = await createProduct(token, { sellingPrice: 50 });
+    const customer = await createCustomer(token);
+    await createBatch(token, { product: product._id, warehouse: warehouse._id, quantity: 1000 });
+
+    const topDoctor = await request(app)
+      .post('/api/doctors')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Dr. Top', incentiveType: 'cash_commission', commissionPercent: 10 });
+    const lowDoctor = await request(app)
+      .post('/api/doctors')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Dr. Low', incentiveType: 'cash_commission', commissionPercent: 10 });
+
+    async function placeOrder(orderNumber, doctorId, quantity) {
+      const order = await request(app)
+        .post('/api/sales-orders')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          orderNumber,
+          customer: customer._id,
+          warehouse: warehouse._id,
+          referringDoctor: doctorId,
+          items: [{ product: product._id, quantity, unitPrice: 50, taxRate: 0, total: quantity * 50 }],
+          subTotal: quantity * 50,
+          grandTotal: quantity * 50,
+        });
+      await request(app).post(`/api/sales-orders/${order.body.data._id}/confirm`).set('Authorization', `Bearer ${token}`);
+      await request(app).post(`/api/sales-orders/${order.body.data._id}/generate-invoice`).set('Authorization', `Bearer ${token}`);
+    }
+
+    await placeOrder('SO-RANK-TOP', topDoctor.body.data._id, 100); // 5000
+    await placeOrder('SO-RANK-LOW', lowDoctor.body.data._id, 10); // 500
+    // A sale with no doctor at all - counts toward company sales but not doctor-referred sales.
+    const directOrder = await request(app)
+      .post('/api/sales-orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        orderNumber: 'SO-RANK-DIRECT',
+        customer: customer._id,
+        warehouse: warehouse._id,
+        items: [{ product: product._id, quantity: 90, unitPrice: 50, taxRate: 0, total: 4500 }],
+        subTotal: 4500,
+        grandTotal: 4500,
+      });
+    await request(app).post(`/api/sales-orders/${directOrder.body.data._id}/confirm`).set('Authorization', `Bearer ${token}`);
+
+    const report = await request(app).get('/api/reports/doctor-commissions').set('Authorization', `Bearer ${token}`);
+    const rows = report.body.data.rows;
+
+    expect(rows[0].doctor).toBe('Dr. Top');
+    expect(rows[0].rank).toBe(1);
+    expect(rows[1].doctor).toBe('Dr. Low');
+    expect(rows[1].rank).toBe(2);
+
+    // Company sales = 5000 + 500 + 4500 = 10000. Doctor-referred = 5000 + 500 = 5500 -> 55%.
+    const { summary } = report.body.data;
+    expect(summary.totalCompanySales).toBe(10000);
+    expect(summary.totalDoctorReferredSales).toBe(5500);
+    expect(summary.doctorReferredSalesPercent).toBe(55);
+    expect(summary.totalCommissionExpense).toBe(550); // 10% of 5500
+    expect(summary.topDoctor.name).toBe('Dr. Top');
+  });
+
+  test('dashboard summary surfaces doctor commission expense and % of business from doctors', async () => {
+    const { token } = await registerUser();
+    const warehouse = await createWarehouse(token);
+    const product = await createProduct(token, { sellingPrice: 100 });
+    const customer = await createCustomer(token);
+    await createBatch(token, { product: product._id, warehouse: warehouse._id, quantity: 100 });
+
+    const doctor = await request(app)
+      .post('/api/doctors')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Dr. Dashboard', incentiveType: 'cash_commission', commissionPercent: 20 });
+
+    const order = await request(app)
+      .post('/api/sales-orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        orderNumber: 'SO-DASH-1',
+        customer: customer._id,
+        warehouse: warehouse._id,
+        referringDoctor: doctor.body.data._id,
+        items: [{ product: product._id, quantity: 10, unitPrice: 100, taxRate: 0, total: 1000 }],
+        subTotal: 1000,
+        grandTotal: 1000,
+      });
+    await request(app).post(`/api/sales-orders/${order.body.data._id}/confirm`).set('Authorization', `Bearer ${token}`);
+    await request(app).post(`/api/sales-orders/${order.body.data._id}/generate-invoice`).set('Authorization', `Bearer ${token}`);
+
+    const dashboard = await request(app).get('/api/dashboard/summary').set('Authorization', `Bearer ${token}`);
+    expect(dashboard.body.data.doctorCommissionExpense).toBe(200);
+    expect(dashboard.body.data.doctorReferredSalesPercent).toBe(100);
+    expect(dashboard.body.data.topDoctor.name).toBe('Dr. Dashboard');
+  });
 });

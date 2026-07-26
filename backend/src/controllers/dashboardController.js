@@ -11,6 +11,7 @@ const Expense = require('../models/Expense');
 const License = require('../models/License');
 const Distributor = require('../models/Distributor');
 const Notification = require('../models/Notification');
+const LedgerEntry = require('../models/LedgerEntry');
 
 // @desc  Aggregate key stats across all modules for the dashboard home page
 // @route GET /api/dashboard/summary
@@ -53,6 +54,34 @@ const getSummary = asyncHandler(async (req, res) => {
     Notification.countDocuments({ isRead: false }),
   ]);
 
+  const [companyTotalResult, doctorSales, commissionPaidResult] = await Promise.all([
+    SalesOrder.aggregate([{ $match: { stockApplied: true } }, { $group: { _id: null, total: { $sum: '$grandTotal' } } }]),
+    SalesOrder.aggregate([
+      { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
+      { $group: { _id: '$referringDoctor', totalSales: { $sum: '$grandTotal' } } },
+      { $lookup: { from: 'doctors', localField: '_id', foreignField: '_id', as: 'doctor' } },
+      { $unwind: '$doctor' },
+      {
+        $addFields: {
+          commissionEarned: {
+            $cond: [
+              { $eq: ['$doctor.incentiveType', 'cash_commission'] },
+              { $multiply: ['$totalSales', { $divide: ['$doctor.commissionPercent', 100] }] },
+              0,
+            ],
+          },
+        },
+      },
+      { $project: { doctorName: '$doctor.name', totalSales: 1, commissionEarned: 1 } },
+      { $sort: { totalSales: -1 } },
+    ]),
+    LedgerEntry.aggregate([{ $match: { partyType: 'doctor', type: 'credit' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
+  ]);
+
+  const totalCompanySales = companyTotalResult[0]?.total || 0;
+  const totalDoctorReferredSales = doctorSales.reduce((sum, d) => sum + d.totalSales, 0);
+  const doctorCommissionExpense = Math.round(doctorSales.reduce((sum, d) => sum + d.commissionEarned, 0) * 100) / 100;
+
   res.json({
     success: true,
     data: {
@@ -69,6 +98,11 @@ const getSummary = asyncHandler(async (req, res) => {
       licenseAlerts,
       distributors: distributorCount,
       unreadNotifications,
+      doctorReferredSalesPercent:
+        totalCompanySales > 0 ? Math.round((totalDoctorReferredSales / totalCompanySales) * 10000) / 100 : 0,
+      doctorCommissionExpense,
+      doctorCommissionPaid: commissionPaidResult[0]?.total || 0,
+      topDoctor: doctorSales[0] ? { name: doctorSales[0].doctorName, totalSales: doctorSales[0].totalSales } : null,
     },
   });
 });

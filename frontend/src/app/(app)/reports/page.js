@@ -98,28 +98,56 @@ function SalesByTerritoryReport({ data }) {
 }
 
 function DoctorCommissionsReport({ data }) {
+  const { summary } = data;
   return (
-    <ReportTable
-      rows={data.rows}
-      columns={[
-        { key: 'doctor', label: 'Doctor' },
-        {
-          key: 'incentiveType',
-          label: 'Incentive',
-          render: (r) => (r.incentiveType === 'cash_commission' ? `${r.commissionPercent}% commission` : `${r.discountPercent}% discount`),
-        },
-        { key: 'orderCount', label: 'Orders' },
-        { key: 'totalSales', label: 'Sales Referred', render: (r) => `$${r.totalSales.toFixed(2)}` },
-        { key: 'commissionEarned', label: 'Commission Earned', render: (r) => `$${r.commissionEarned.toFixed(2)}` },
-        { key: 'commissionPaid', label: 'Commission Paid', render: (r) => `$${r.commissionPaid.toFixed(2)}` },
-        {
-          key: 'balanceOwed',
-          label: 'Balance Owed',
-          render: (r) => <span className={r.balanceOwed > 0 ? 'font-semibold text-red-700' : ''}>${r.balanceOwed.toFixed(2)}</span>,
-        },
-      ]}
-      filename="doctor-commissions"
-    />
+    <div>
+      {summary && (
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
+            <p className="text-xs text-slate-400">% of Business From Doctors</p>
+            <p className="text-lg font-semibold text-violet-700">{summary.doctorReferredSalesPercent}%</p>
+            <p className="text-xs text-slate-400">
+              ${summary.totalDoctorReferredSales.toFixed(0)} of ${summary.totalCompanySales.toFixed(0)}
+            </p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
+            <p className="text-xs text-slate-400">Commission Expense (Earned)</p>
+            <p className="text-lg font-semibold text-rose-700">${summary.totalCommissionExpense.toFixed(2)}</p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
+            <p className="text-xs text-slate-400">Commission Paid</p>
+            <p className="text-lg font-semibold text-emerald-700">${summary.totalCommissionPaid.toFixed(2)}</p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-white p-3 text-center">
+            <p className="text-xs text-slate-400">Still Owed to Doctors</p>
+            <p className="text-lg font-semibold text-amber-700">${summary.totalCommissionOwed.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
+      <ReportTable
+        rows={data.rows}
+        columns={[
+          { key: 'rank', label: 'Rank', render: (r) => `#${r.rank}` },
+          { key: 'doctor', label: 'Doctor' },
+          {
+            key: 'incentiveType',
+            label: 'Incentive',
+            render: (r) => (r.incentiveType === 'cash_commission' ? `${r.commissionPercent}% commission` : `${r.discountPercent}% discount`),
+          },
+          { key: 'orderCount', label: 'Orders' },
+          { key: 'totalSales', label: 'Sales Referred', render: (r) => `$${r.totalSales.toFixed(2)}` },
+          { key: 'salesSharePercent', label: '% of Company Sales', render: (r) => `${r.salesSharePercent}%` },
+          { key: 'commissionEarned', label: 'Commission Earned', render: (r) => `$${r.commissionEarned.toFixed(2)}` },
+          { key: 'commissionPaid', label: 'Commission Paid', render: (r) => `$${r.commissionPaid.toFixed(2)}` },
+          {
+            key: 'balanceOwed',
+            label: 'Balance Owed',
+            render: (r) => <span className={r.balanceOwed > 0 ? 'font-semibold text-red-700' : ''}>${r.balanceOwed.toFixed(2)}</span>,
+          },
+        ]}
+        filename="doctor-commissions"
+      />
+    </div>
   );
 }
 

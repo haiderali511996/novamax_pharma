@@ -18,6 +18,8 @@ const CARDS = [
   { key: 'licenseAlerts', label: 'License Renewals Due', color: 'bg-yellow-50 text-yellow-700' },
   { key: 'distributors', label: 'Active Distributors', color: 'bg-cyan-50 text-cyan-700' },
   { key: 'unreadNotifications', label: 'Unread Notifications', color: 'bg-red-50 text-red-700' },
+  { key: 'doctorCommissionExpense', label: 'Doctor Commission Expense (Total)', color: 'bg-rose-50 text-rose-700', currency: true },
+  { key: 'doctorReferredSalesPercent', label: '% of Business From Doctors', color: 'bg-violet-50 text-violet-700', percent: true },
 ];
 
 export default function DashboardPage() {
@@ -47,12 +49,27 @@ export default function DashboardPage() {
               {stats
                 ? card.currency
                   ? `$${Number(stats[card.key]).toLocaleString()}`
+                  : card.percent
+                  ? `${stats[card.key]}%`
                   : stats[card.key]
                 : '—'}
             </p>
           </div>
         ))}
       </div>
+
+      {stats?.topDoctor && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Top Referring Doctor</p>
+          <p className="mt-1 text-lg font-semibold text-slate-800">
+            {stats.topDoctor.name} <span className="font-normal text-slate-500">— ${stats.topDoctor.totalSales.toLocaleString()} in referred sales</span>
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Paid so far: ${Number(stats.doctorCommissionPaid).toLocaleString()} of ${Number(stats.doctorCommissionExpense).toLocaleString()}{' '}
+            earned. See Reports &gt; Doctor Commissions for the full ranking.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

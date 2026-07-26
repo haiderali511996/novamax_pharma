@@ -178,16 +178,22 @@ const getProfitAndLoss = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { month, year, revenue, cogs, grossProfit, expenses, netProfit } });
 });
 
-// @desc  Sales attributed to each referring doctor, and - for
-//        cash-commission doctors - how much commission has been earned,
-//        paid (ledger credits), and is still owed.
+// @desc  Sales attributed to each referring doctor, ranked best-to-worst by
+//        business generated, plus - for cash-commission doctors - how much
+//        commission has been earned, paid (ledger credits), and is still
+//        owed. Also reports what share of total company sales came through
+//        doctor referrals at all, and the total commission expense.
 // @route GET /api/reports/doctor-commissions
 const getDoctorCommissions = asyncHandler(async (req, res) => {
-  const salesByDoctor = await SalesOrder.aggregate([
-    { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
-    { $group: { _id: '$referringDoctor', totalSales: { $sum: '$grandTotal' }, orderCount: { $sum: 1 } } },
+  const [salesByDoctor, companyTotalResult] = await Promise.all([
+    SalesOrder.aggregate([
+      { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
+      { $group: { _id: '$referringDoctor', totalSales: { $sum: '$grandTotal' }, orderCount: { $sum: 1 } } },
+    ]),
+    SalesOrder.aggregate([{ $match: { stockApplied: true } }, { $group: { _id: null, total: { $sum: '$grandTotal' } } }]),
   ]);
   const salesById = new Map(salesByDoctor.map((r) => [String(r._id), r]));
+  const totalCompanySales = companyTotalResult[0]?.total || 0;
 
   const doctors = await Doctor.find({ _id: { $in: [...salesById.keys()] } });
 
@@ -212,11 +218,37 @@ const getDoctorCommissions = asyncHandler(async (req, res) => {
       commissionEarned,
       commissionPaid,
       balanceOwed,
+      salesSharePercent: totalCompanySales > 0 ? Math.round((sales.totalSales / totalCompanySales) * 10000) / 100 : 0,
     });
   }
 
+  // Rank best-to-worst by business generated for NovaMax (totalSales).
   rows.sort((a, b) => b.totalSales - a.totalSales);
-  res.json({ success: true, data: { rows } });
+  rows.forEach((r, i) => {
+    r.rank = i + 1;
+  });
+
+  const totalDoctorReferredSales = rows.reduce((sum, r) => sum + r.totalSales, 0);
+  const totalCommissionExpense = rows.reduce((sum, r) => sum + r.commissionEarned, 0);
+  const totalCommissionPaid = rows.reduce((sum, r) => sum + r.commissionPaid, 0);
+  const totalCommissionOwed = rows.reduce((sum, r) => sum + r.balanceOwed, 0);
+
+  res.json({
+    success: true,
+    data: {
+      rows,
+      summary: {
+        totalCompanySales,
+        totalDoctorReferredSales,
+        doctorReferredSalesPercent:
+          totalCompanySales > 0 ? Math.round((totalDoctorReferredSales / totalCompanySales) * 10000) / 100 : 0,
+        totalCommissionExpense,
+        totalCommissionPaid,
+        totalCommissionOwed,
+        topDoctor: rows[0] ? { name: rows[0].doctor, totalSales: rows[0].totalSales } : null,
+      },
+    },
+  });
 });
 
 module.exports = {

@@ -183,10 +183,12 @@ export const HELP_SECTIONS = [
         ],
       },
       {
-        heading: 'Doctor Commissions report',
+        heading: 'Doctor Commissions report - ranking and totals',
         image: 'report-doctor-commissions.png',
         body: [
-          'Go to Reports > Doctor Commissions to see, per doctor: total sales they referred, commission earned, commission paid, and the balance still owed - everything you need for a monthly payout run.',
+          'Go to Reports > Doctor Commissions to see every doctor ranked #1 (best) to last by how much business they referred, along with their % share of total company sales, commission earned, commission paid, and balance still owed.',
+          'Summary cards at the top show company-wide totals: what % of all NovaMax sales came through doctor referrals, and the total commission expense earned/paid/still owed across every doctor - everything you need for a monthly payout run.',
+          'The Dashboard also shows a running "Doctor Commission Expense" total, the "% of Business From Doctors", and a card naming your current top referring doctor, so you don\'t have to open the report just to check the headline numbers.',
         ],
       },
     ],
