@@ -89,6 +89,12 @@ Runs the full Jest + Supertest suite (59 tests across 13 files) against an isola
 
 ## Deploying to production (erp.novamaxpharma.com)
 
+Two supported paths, depending on what kind of hosting you have:
+
+- **Shared hosting / cPanel, no SSH, no Docker** → see [`DEPLOY-CPANEL.md`](./DEPLOY-CPANEL.md)
+  (uses cPanel's "Setup Node.js App" / Passenger for both apps).
+- **VPS with Docker** → follow the steps below.
+
 This uses MongoDB Atlas (not the local `mongo` container) and nginx as a reverse
 proxy in front of the two app containers.
 

@@ -28,7 +28,7 @@ router.post(
     }
     res.status(201).json({
       success: true,
-      data: { url: `/uploads/${req.file.filename}`, originalName: req.file.originalname },
+      data: { url: `/api/uploads/${req.file.filename}`, originalName: req.file.originalname },
     });
   })
 );

@@ -4,8 +4,14 @@ const { app, request, registerUser } = require('./helpers/factory');
 
 const uploadedFiles = [];
 
+// Files are physically stored in backend/uploads/ regardless of the URL
+// prefix they're served under (see app.js) - resolve cleanup paths from the
+// filename, not by naively joining the URL.
+function trackForCleanup(url) {
+  uploadedFiles.push(path.join(__dirname, '..', 'uploads', path.basename(url)));
+}
+
 afterEach(() => {
-  // Clean up files this suite wrote to backend/uploads/ so re-runs don't accumulate.
   while (uploadedFiles.length) {
     const file = uploadedFiles.pop();
     fs.rm(file, { force: true }, () => {});
@@ -21,8 +27,8 @@ describe('File uploads', () => {
       .attach('file', Buffer.from('%PDF-1.4 fake content'), { filename: 'license.pdf', contentType: 'application/pdf' });
 
     expect(res.status).toBe(201);
-    expect(res.body.data.url).toMatch(/^\/uploads\/.+\.pdf$/);
-    uploadedFiles.push(path.join(__dirname, '..', res.body.data.url));
+    expect(res.body.data.url).toMatch(/^\/api\/uploads\/.+\.pdf$/);
+    trackForCleanup(res.body.data.url);
 
     // application/pdf isn't one of superagent's auto-parsed text types, so
     // force buffering to read the raw bytes back for the assertion.
@@ -57,7 +63,7 @@ describe('File uploads', () => {
       .post('/api/uploads')
       .set('Authorization', `Bearer ${token}`)
       .attach('file', Buffer.from('%PDF-1.4'), { filename: 'license.pdf', contentType: 'application/pdf' });
-    uploadedFiles.push(path.join(__dirname, '..', upload.body.data.url));
+    trackForCleanup(upload.body.data.url);
 
     const license = await request(app)
       .post('/api/licenses')

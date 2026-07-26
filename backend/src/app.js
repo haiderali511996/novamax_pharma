@@ -73,8 +73,13 @@ app.get('/api/health', (req, res) => res.json({ success: true, message: 'NovaMax
 // Uploaded license documents / expense receipts. Cross-Origin-Resource-Policy
 // is relaxed just for this path so the frontend (a different origin) can
 // embed/preview them, e.g. images inline instead of only opening in a new tab.
+//
+// Served under /api/uploads (not just /uploads) so the whole backend lives
+// under one URL prefix - some hosts (e.g. cPanel's "Setup Node.js App",
+// which maps this backend to a subpath like /api on shared hosting with no
+// reverse-proxy config of our own) only route that one prefix to this app.
 app.use(
-  '/uploads',
+  '/api/uploads',
   (req, res, next) => {
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
