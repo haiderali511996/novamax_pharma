@@ -12,12 +12,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* This app is built with hardcoded light-mode Tailwind classes throughout
+   (bg-white cards, text-slate-* grays) - it has no actual dark theme. A
+   prefers-color-scheme flip here previously changed body text to near-white
+   while cards stayed bg-white, making form inputs unreadable (white text on
+   a white input) for anyone with system dark mode on. Do not reintroduce
+   this without also theming every component. */
 
 body {
   background: var(--background);
