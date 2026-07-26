@@ -8,6 +8,7 @@ const router = express.Router();
 const ctrl = createCrudController(PurchaseOrder, {
   populate: [
     { path: 'supplier', select: 'name email phone' },
+    { path: 'manufacturer', select: 'name' },
     { path: 'warehouse', select: 'name code' },
     { path: 'items.product', select: 'name sku' },
   ],

@@ -56,6 +56,7 @@ const receivePurchaseOrder = asyncHandler(async (req, res) => {
         quantity: item.quantity,
         costPrice: item.unitCost,
         supplier: order.supplier,
+        manufacturer: order.manufacturer,
       });
     }
 

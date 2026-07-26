@@ -10,6 +10,11 @@ const batchSchema = new mongoose.Schema(
     quantity: { type: Number, required: true, min: 0, default: 0 },
     costPrice: { type: Number, min: 0 },
     supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' },
+    // Which contract manufacturer actually produced this specific batch.
+    // A brand (Product) can be tolled out to several manufacturers over
+    // time, so this lives on the batch, not the product - Product.manufacturer
+    // is just the "usual"/default one, this is what actually made THIS stock.
+    manufacturer: { type: mongoose.Schema.Types.ObjectId, ref: 'Manufacturer' },
   },
   { timestamps: true }
 );

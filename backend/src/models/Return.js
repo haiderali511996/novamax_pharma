@@ -24,7 +24,17 @@ const returnSchema = new mongoose.Schema(
     partyModel: { type: String, required: true, enum: Object.values(PARTY_MODELS) },
     items: { type: [returnItemSchema], validate: (v) => v.length > 0 },
     totalAmount: { type: Number, required: true, min: 0 },
+    reasonCategory: {
+      type: String,
+      enum: ['unsold_slow_moving', 'near_expiry', 'expired', 'damaged', 'wrong_item', 'other'],
+      default: 'unsold_slow_moving',
+    },
     reason: { type: String, trim: true },
+    // restock: goods are sellable, put the quantity back into the batch.
+    // writeoff: goods are not sellable (expired/damaged) - the party is
+    // still credited (they don't owe for it), but stock is NOT put back;
+    // instead it's recorded as a loss via a stock-adjustment movement.
+    disposition: { type: String, enum: ['restock', 'writeoff'], default: 'restock' },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     // Set once stock has been put back and the ledger credited, so
     // approving twice never double-restocks or double-credits.

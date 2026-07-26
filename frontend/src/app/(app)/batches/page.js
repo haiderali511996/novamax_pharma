@@ -5,6 +5,7 @@ import ResourceManager from '@/components/ResourceManager';
 const columns = [
   { key: 'product.name', label: 'Product' },
   { key: 'warehouse.name', label: 'Warehouse' },
+  { key: 'manufacturer.name', label: 'Manufacturer' },
   { key: 'batchNumber', label: 'Batch #' },
   { key: 'quantity', label: 'Qty' },
   {
@@ -32,6 +33,13 @@ const fields = [
     optionLabel: (w) => `${w.name} (${w.code})`,
   },
   { name: 'batchNumber', label: 'Batch Number', required: true },
+  {
+    name: 'manufacturer',
+    label: 'Manufacturer (who produced this batch)',
+    type: 'select-async',
+    endpoint: '/manufacturers',
+    optionLabel: (m) => m.name,
+  },
   { name: 'manufactureDate', label: 'Manufacture Date', type: 'date' },
   { name: 'expiryDate', label: 'Expiry Date', type: 'date', required: true },
   { name: 'quantity', label: 'Quantity', type: 'number', required: true },

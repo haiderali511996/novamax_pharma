@@ -18,6 +18,11 @@ const purchaseOrderSchema = new mongoose.Schema(
   {
     poNumber: { type: String, required: true, unique: true, trim: true },
     supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier', required: true },
+    // Contract manufacturer that actually produces this order's goods
+    // (distinct from "supplier", which may be a distribution middleman).
+    // Optional - only set this when buying directly from a toll manufacturer.
+    // Stamped onto every batch created when the PO is received.
+    manufacturer: { type: mongoose.Schema.Types.ObjectId, ref: 'Manufacturer' },
     warehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse', required: true },
     items: { type: [lineItemSchema], validate: (v) => v.length > 0 },
     subTotal: { type: Number, required: true, min: 0 },

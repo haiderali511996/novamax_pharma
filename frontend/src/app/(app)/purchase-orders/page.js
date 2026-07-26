@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 const columns = [
   { key: 'poNumber', label: 'PO #' },
   { key: 'supplier.name', label: 'Supplier' },
+  { key: 'manufacturer.name', label: 'Manufacturer' },
   { key: 'warehouse.name', label: 'Warehouse' },
   {
     key: 'status',
@@ -35,6 +36,13 @@ const fields = [
     endpoint: '/suppliers',
     required: true,
     optionLabel: (s) => s.name,
+  },
+  {
+    name: 'manufacturer',
+    label: 'Contract Manufacturer (if buying directly from a toll manufacturer)',
+    type: 'select-async',
+    endpoint: '/manufacturers',
+    optionLabel: (m) => m.name,
   },
   {
     name: 'warehouse',

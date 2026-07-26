@@ -44,6 +44,69 @@ describe('Returns', () => {
     expect(reapprove.status).toBe(400);
   });
 
+  test('a return with disposition "restock" (the default) puts stock back, as before', async () => {
+    const { token } = await registerUser();
+    const warehouse = await createWarehouse(token);
+    const product = await createProduct(token);
+    const customer = await createCustomer(token);
+    const batch = await createBatch(token, { product: product._id, warehouse: warehouse._id, quantity: 50 });
+
+    const ret = await request(app)
+      .post('/api/returns')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        returnNumber: 'RET-RESTOCK',
+        partyType: 'customer',
+        party: customer._id,
+        items: [{ product: product._id, batch: batch._id, quantity: 5, unitPrice: 5, total: 25 }],
+        totalAmount: 25,
+      });
+    expect(ret.body.data.disposition).toBe('restock');
+
+    await request(app).post(`/api/returns/${ret.body.data._id}/approve`).set('Authorization', `Bearer ${token}`);
+
+    const batches = await request(app).get('/api/batches').set('Authorization', `Bearer ${token}`);
+    expect(batches.body.data[0].quantity).toBe(55);
+  });
+
+  test('a return with disposition "writeoff" credits the ledger but does NOT put stock back', async () => {
+    const { token } = await registerUser();
+    const warehouse = await createWarehouse(token);
+    const product = await createProduct(token);
+    const customer = await createCustomer(token);
+    const batch = await createBatch(token, { product: product._id, warehouse: warehouse._id, quantity: 50 });
+
+    const ret = await request(app)
+      .post('/api/returns')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        returnNumber: 'RET-WRITEOFF',
+        partyType: 'customer',
+        party: customer._id,
+        items: [{ product: product._id, batch: batch._id, quantity: 5, unitPrice: 5, total: 25 }],
+        totalAmount: 25,
+        reasonCategory: 'expired',
+        disposition: 'writeoff',
+      });
+    expect(ret.body.data.disposition).toBe('writeoff');
+
+    const approve = await request(app)
+      .post(`/api/returns/${ret.body.data._id}/approve`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(approve.status).toBe(200);
+    expect(approve.body.data.stockApplied).toBe(true);
+
+    // Stock must NOT be restocked - it's expired/damaged, not sellable.
+    const batches = await request(app).get('/api/batches').set('Authorization', `Bearer ${token}`);
+    expect(batches.body.data[0].quantity).toBe(50);
+
+    // The party is still credited - they don't owe for goods they returned.
+    const ledger = await request(app)
+      .get(`/api/ledger-entries/statement?partyType=customer&party=${customer._id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(ledger.body.data.closingBalance).toBe(-25);
+  });
+
   test('rejecting a return leaves stock and the ledger untouched', async () => {
     const { token } = await registerUser();
     const warehouse = await createWarehouse(token);

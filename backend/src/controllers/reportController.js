@@ -21,10 +21,15 @@ const getStockValuation = asyncHandler(async (req, res) => {
     },
     { $unwind: '$warehouse' },
     {
+      $lookup: { from: 'manufacturers', localField: 'manufacturer', foreignField: '_id', as: 'manufacturer' },
+    },
+    { $unwind: { path: '$manufacturer', preserveNullAndEmptyArrays: true } },
+    {
       $project: {
         product: '$product.name',
         sku: '$product.sku',
         warehouse: '$warehouse.name',
+        manufacturer: { $ifNull: ['$manufacturer.name', 'Unspecified'] },
         batchNumber: 1,
         quantity: 1,
         costPrice: { $ifNull: ['$costPrice', '$product.costPrice'] },

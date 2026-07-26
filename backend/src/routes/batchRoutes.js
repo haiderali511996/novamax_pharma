@@ -9,6 +9,7 @@ const ctrl = createCrudController(Batch, {
   populate: [
     { path: 'product', select: 'name sku' },
     { path: 'warehouse', select: 'name code' },
+    { path: 'manufacturer', select: 'name' },
   ],
 });
 

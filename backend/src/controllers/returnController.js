@@ -11,8 +11,14 @@ const createReturn = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: ret });
 });
 
-// @desc  Approve a return: restocks each batch, logs a stock-in movement,
-//        and posts a credit to the party's ledger (reduces what they owe).
+// @desc  Approve a return. If disposition is 'restock' (the default -
+//        unsold, still sellable stock), puts the quantity back into the
+//        exact batch and logs a stock-in movement. If 'writeoff'
+//        (expired/damaged - e.g. a pharmacy couldn't sell it before it
+//        went near-expiry and it's no longer fit to resell), stock is
+//        NOT put back; instead an informational adjustment movement
+//        records the loss. Either way, the party is credited - they
+//        don't owe for goods they returned, sellable or not.
 // @route POST /api/returns/:id/approve
 const approveReturn = asyncHandler(async (req, res) => {
   const ret = await Return.findById(req.params.id);
@@ -31,19 +37,33 @@ const approveReturn = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('One of the returned items references a batch that no longer exists');
     }
-    batch.quantity += item.quantity;
-    await batch.save();
 
-    await StockMovement.create({
-      product: item.product,
-      batch: batch._id,
-      warehouse: batch.warehouse,
-      type: 'in',
-      quantity: item.quantity,
-      reason: 'Customer/distributor return',
-      reference: ret.returnNumber,
-      createdBy: req.user._id,
-    });
+    if (ret.disposition === 'writeoff') {
+      await StockMovement.create({
+        product: item.product,
+        batch: batch._id,
+        warehouse: batch.warehouse,
+        type: 'adjustment',
+        quantity: item.quantity,
+        reason: `Return written off (${ret.reasonCategory}) - not restocked`,
+        reference: ret.returnNumber,
+        createdBy: req.user._id,
+      });
+    } else {
+      batch.quantity += item.quantity;
+      await batch.save();
+
+      await StockMovement.create({
+        product: item.product,
+        batch: batch._id,
+        warehouse: batch.warehouse,
+        type: 'in',
+        quantity: item.quantity,
+        reason: 'Customer/distributor return',
+        reference: ret.returnNumber,
+        createdBy: req.user._id,
+      });
+    }
   }
 
   await LedgerEntry.create({

@@ -24,6 +24,7 @@ function StockValuationReport({ data }) {
           { key: 'product', label: 'Product' },
           { key: 'sku', label: 'SKU' },
           { key: 'warehouse', label: 'Warehouse' },
+          { key: 'manufacturer', label: 'Manufacturer' },
           { key: 'batchNumber', label: 'Batch' },
           { key: 'quantity', label: 'Qty' },
           { key: 'costPrice', label: 'Cost Price', render: (r) => `$${r.costPrice}` },

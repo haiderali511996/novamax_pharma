@@ -11,6 +11,7 @@ const getExpiryAlerts = asyncHandler(async (req, res) => {
   const batches = await Batch.find({ expiryDate: { $lte: cutoff }, quantity: { $gt: 0 } })
     .populate('product', 'name sku')
     .populate('warehouse', 'name code')
+    .populate('manufacturer', 'name')
     .sort({ expiryDate: 1 });
 
   res.json({ success: true, count: batches.length, data: batches });
