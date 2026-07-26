@@ -44,6 +44,7 @@ export const NAV_GROUPS = [
   {
     label: 'Field Force',
     items: [
+      { href: '/doctors', label: 'Doctors' },
       { href: '/field-visits', label: 'Doctor & Chemist Visits' },
       { href: '/sales-targets', label: 'Sales Targets' },
       { href: '/expense-claims', label: 'Expense Claims' },
@@ -73,6 +74,7 @@ export const NAV_GROUPS = [
       { href: '/ledgers/customers', label: 'Customer Ledger' },
       { href: '/ledgers/distributors', label: 'Distributor Ledger' },
       { href: '/ledgers/manufacturers', label: 'Manufacturer Ledger' },
+      { href: '/ledgers/doctors', label: 'Doctor Commission Ledger' },
       { href: '/ledgers/employees', label: 'Employee Ledger' },
       { href: '/ledgers/expenses', label: 'Expense Ledger' },
     ],

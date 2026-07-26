@@ -9,6 +9,7 @@ const columns = [
   { key: 'customer.name', label: 'Customer' },
   { key: 'warehouse.name', label: 'Warehouse' },
   { key: 'salesRep.name', label: 'Sales Rep' },
+  { key: 'referringDoctor.name', label: 'Referring Doctor' },
   {
     key: 'status',
     label: 'Status',
@@ -51,6 +52,14 @@ const fields = [
     type: 'select-async',
     endpoint: '/employees',
     optionLabel: (e) => `${e.name} (${e.employeeId})`,
+  },
+  {
+    name: 'referringDoctor',
+    label: 'Referring Doctor (if this sale was prescribed/referred by a doctor)',
+    type: 'select-async',
+    endpoint: '/doctors',
+    optionLabel: (d) =>
+      `${d.name} (${d.incentiveType === 'cash_commission' ? `${d.commissionPercent}% commission` : `${d.discountPercent}% discount`})`,
   },
   {
     name: 'items',

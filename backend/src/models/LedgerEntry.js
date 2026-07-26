@@ -11,10 +11,17 @@ const mongoose = require('mongoose');
 //   distributor  - debit = invoice raised (they owe us more), credit = payment/return received -> balance = amount owed BY distributor
 //   manufacturer - debit = bill/purchase received (we owe them more), credit = payment made -> balance = amount owed TO manufacturer
 //   employee     - debit = advance/loan given (they owe us), credit = salary paid / repayment -> balance = net advance owed BY employee
+//   doctor       - debit = commission earned on a referred sale (we owe them more), credit = commission paid -> balance = amount owed TO doctor
 //
 // The UI labels debit/credit per party type so each statement reads naturally.
-const PARTY_TYPES = ['customer', 'distributor', 'manufacturer', 'employee'];
-const PARTY_MODELS = { customer: 'Customer', distributor: 'Distributor', manufacturer: 'Manufacturer', employee: 'Employee' };
+const PARTY_TYPES = ['customer', 'distributor', 'manufacturer', 'employee', 'doctor'];
+const PARTY_MODELS = {
+  customer: 'Customer',
+  distributor: 'Distributor',
+  manufacturer: 'Manufacturer',
+  employee: 'Employee',
+  doctor: 'Doctor',
+};
 
 const ledgerEntrySchema = new mongoose.Schema(
   {

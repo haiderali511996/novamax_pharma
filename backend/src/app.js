@@ -39,6 +39,8 @@ const expenseClaimRoutes = require('./routes/expenseClaimRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const auditLogRoutes = require('./routes/auditLogRoutes');
+const doctorRoutes = require('./routes/doctorRoutes');
+const pricingRoutes = require('./routes/pricingRoutes');
 
 // Pure Express app construction - no DB connection, no listening, no
 // background timers. Safe to require from tests (with their own DB
@@ -113,6 +115,8 @@ app.use('/api/expense-claims', expenseClaimRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/pricing', pricingRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

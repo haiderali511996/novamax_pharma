@@ -6,6 +6,7 @@ const LedgerEntry = require('../models/LedgerEntry');
 const SalesOrder = require('../models/SalesOrder');
 const Expense = require('../models/Expense');
 const StockMovement = require('../models/StockMovement');
+const Doctor = require('../models/Doctor');
 
 // @desc  Current stock valuation (quantity * cost price) per product/warehouse
 // @route GET /api/reports/stock-valuation
@@ -177,4 +178,52 @@ const getProfitAndLoss = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { month, year, revenue, cogs, grossProfit, expenses, netProfit } });
 });
 
-module.exports = { getStockValuation, getAgedReceivables, getAgedPayables, getSalesByTerritory, getProfitAndLoss };
+// @desc  Sales attributed to each referring doctor, and - for
+//        cash-commission doctors - how much commission has been earned,
+//        paid (ledger credits), and is still owed.
+// @route GET /api/reports/doctor-commissions
+const getDoctorCommissions = asyncHandler(async (req, res) => {
+  const salesByDoctor = await SalesOrder.aggregate([
+    { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
+    { $group: { _id: '$referringDoctor', totalSales: { $sum: '$grandTotal' }, orderCount: { $sum: 1 } } },
+  ]);
+  const salesById = new Map(salesByDoctor.map((r) => [String(r._id), r]));
+
+  const doctors = await Doctor.find({ _id: { $in: [...salesById.keys()] } });
+
+  const rows = [];
+  for (const doctor of doctors) {
+    const sales = salesById.get(String(doctor._id));
+    const isCash = doctor.incentiveType === 'cash_commission';
+    const commissionEarned = isCash ? Math.round(((sales.totalSales * doctor.commissionPercent) / 100) * 100) / 100 : 0;
+
+    const entries = await LedgerEntry.find({ partyType: 'doctor', party: doctor._id });
+    const commissionPaid = entries.filter((e) => e.type === 'credit').reduce((sum, e) => sum + e.amount, 0);
+    const balanceOwed = isCash ? Math.round((commissionEarned - commissionPaid) * 100) / 100 : 0;
+
+    rows.push({
+      doctor: doctor.name,
+      doctorId: doctor._id,
+      incentiveType: doctor.incentiveType,
+      totalSales: sales.totalSales,
+      orderCount: sales.orderCount,
+      commissionPercent: doctor.commissionPercent,
+      discountPercent: doctor.discountPercent,
+      commissionEarned,
+      commissionPaid,
+      balanceOwed,
+    });
+  }
+
+  rows.sort((a, b) => b.totalSales - a.totalSales);
+  res.json({ success: true, data: { rows } });
+});
+
+module.exports = {
+  getStockValuation,
+  getAgedReceivables,
+  getAgedPayables,
+  getSalesByTerritory,
+  getProfitAndLoss,
+  getDoctorCommissions,
+};

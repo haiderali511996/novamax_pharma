@@ -8,6 +8,7 @@ const columns = [
   { key: 'phone', label: 'Phone' },
   { key: 'city', label: 'City' },
   { key: 'creditLimit', label: 'Credit Limit', render: (i) => `$${i.creditLimit}` },
+  { key: 'pharmacyDiscountPercent', label: 'Discount off TP', render: (i) => `${i.pharmacyDiscountPercent}%` },
 ];
 
 const fields = [
@@ -24,6 +25,11 @@ const fields = [
   { name: 'city', label: 'City' },
   { name: 'taxId', label: 'Tax ID' },
   { name: 'creditLimit', label: 'Credit Limit', type: 'number' },
+  {
+    name: 'pharmacyDiscountPercent',
+    label: 'Discount off Trade Price (applied after any doctor discount)',
+    type: 'number',
+  },
 ];
 
 export default function CustomersPage() {

@@ -6,6 +6,7 @@ const {
   getAgedPayables,
   getSalesByTerritory,
   getProfitAndLoss,
+  getDoctorCommissions,
 } = require('../controllers/reportController');
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get('/aged-receivables', getAgedReceivables);
 router.get('/aged-payables', getAgedPayables);
 router.get('/sales-by-territory', getSalesByTerritory);
 router.get('/profit-loss', getProfitAndLoss);
+router.get('/doctor-commissions', getDoctorCommissions);
 
 module.exports = router;

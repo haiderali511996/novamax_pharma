@@ -9,6 +9,7 @@ const REPORTS = [
   { key: 'aged-receivables', label: 'Aged Receivables' },
   { key: 'aged-payables', label: 'Aged Payables' },
   { key: 'sales-by-territory', label: 'Sales by Territory' },
+  { key: 'doctor-commissions', label: 'Doctor Commissions' },
   { key: 'profit-loss', label: 'Profit & Loss' },
 ];
 
@@ -96,6 +97,32 @@ function SalesByTerritoryReport({ data }) {
   );
 }
 
+function DoctorCommissionsReport({ data }) {
+  return (
+    <ReportTable
+      rows={data.rows}
+      columns={[
+        { key: 'doctor', label: 'Doctor' },
+        {
+          key: 'incentiveType',
+          label: 'Incentive',
+          render: (r) => (r.incentiveType === 'cash_commission' ? `${r.commissionPercent}% commission` : `${r.discountPercent}% discount`),
+        },
+        { key: 'orderCount', label: 'Orders' },
+        { key: 'totalSales', label: 'Sales Referred', render: (r) => `$${r.totalSales.toFixed(2)}` },
+        { key: 'commissionEarned', label: 'Commission Earned', render: (r) => `$${r.commissionEarned.toFixed(2)}` },
+        { key: 'commissionPaid', label: 'Commission Paid', render: (r) => `$${r.commissionPaid.toFixed(2)}` },
+        {
+          key: 'balanceOwed',
+          label: 'Balance Owed',
+          render: (r) => <span className={r.balanceOwed > 0 ? 'font-semibold text-red-700' : ''}>${r.balanceOwed.toFixed(2)}</span>,
+        },
+      ]}
+      filename="doctor-commissions"
+    />
+  );
+}
+
 function ProfitLossReport({ data }) {
   const rows = [
     { label: 'Revenue', value: data.revenue },
@@ -173,6 +200,7 @@ const RENDERERS = {
   'aged-receivables': AgedReceivablesReport,
   'aged-payables': AgedPayablesReport,
   'sales-by-territory': SalesByTerritoryReport,
+  'doctor-commissions': DoctorCommissionsReport,
   'profit-loss': ProfitLossReport,
 };
 

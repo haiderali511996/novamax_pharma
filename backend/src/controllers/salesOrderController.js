@@ -3,8 +3,32 @@ const SalesOrder = require('../models/SalesOrder');
 const Batch = require('../models/Batch');
 const StockMovement = require('../models/StockMovement');
 const Invoice = require('../models/Invoice');
+const Doctor = require('../models/Doctor');
+const LedgerEntry = require('../models/LedgerEntry');
 const { postInvoiceLedgerEntry } = require('./invoiceController');
 const { logAudit } = require('../utils/auditLogger');
+
+// If this order was referred by a cash-commission doctor, credit them their
+// cut as a payable - a debit on the doctor's ledger (we owe them more).
+// Product-discount doctors get nothing posted here: their incentive is
+// already baked into the line item prices the pharmacy paid.
+async function postDoctorCommissionIfApplicable(order, invoice, userId) {
+  if (!order.referringDoctor) return;
+  const doctor = await Doctor.findById(order.referringDoctor);
+  if (!doctor || doctor.incentiveType !== 'cash_commission' || !doctor.commissionPercent) return;
+
+  const commissionAmount = Math.round((invoice.amount * doctor.commissionPercent) / 100 * 100) / 100;
+  await LedgerEntry.create({
+    partyType: 'doctor',
+    party: doctor._id,
+    type: 'debit',
+    amount: commissionAmount,
+    description: `Commission (${doctor.commissionPercent}%) on invoice ${invoice.invoiceNumber}`,
+    reference: invoice.invoiceNumber,
+    source: 'invoice',
+    createdBy: userId,
+  });
+}
 
 // @desc  Confirm a sales order: deducts stock (FEFO if no batch was chosen
 //        on the line item) and logs a stock-out movement per batch used.
@@ -121,6 +145,7 @@ const generateInvoiceForSalesOrder = asyncHandler(async (req, res) => {
   });
 
   await postInvoiceLedgerEntry(invoice, req.user._id, ` (from order ${order.orderNumber})`);
+  await postDoctorCommissionIfApplicable(order, invoice, req.user._id);
 
   await logAudit({
     user: req.user,
