@@ -10,6 +10,7 @@ const columns = [
   { key: 'warehouse.name', label: 'Warehouse' },
   { key: 'salesRep.name', label: 'Sales Rep' },
   { key: 'referringDoctor.name', label: 'Referring Doctor' },
+  { key: 'referralLocation', label: 'Referral Location' },
   {
     key: 'status',
     label: 'Status',
@@ -60,6 +61,10 @@ const fields = [
     endpoint: '/doctors',
     optionLabel: (d) =>
       `${d.name} (${d.incentiveType === 'cash_commission' ? `${d.commissionPercent}% commission` : `${d.discountPercent}% discount`})`,
+  },
+  {
+    name: 'referralLocation',
+    label: 'Referral Location (e.g. "Nawazsharif Medical Complex" or "City Clinic - Evening") - only if a doctor is referring',
   },
   {
     name: 'items',

@@ -183,17 +183,40 @@ const getProfitAndLoss = asyncHandler(async (req, res) => {
 //        commission has been earned, paid (ledger credits), and is still
 //        owed. Also reports what share of total company sales came through
 //        doctor referrals at all, and the total commission expense.
+//
+//        A doctor who sits at more than one place (e.g. a hospital in the
+//        morning, a clinic in the evening) is still ONE doctor with ONE
+//        commission total - business from every location they refer from
+//        rolls up together. `byLocation` just breaks that same total down
+//        by where each sale was referred from (see SalesOrder.referralLocation),
+//        it never changes the doctor-level totals or their commission.
 // @route GET /api/reports/doctor-commissions
 const getDoctorCommissions = asyncHandler(async (req, res) => {
-  const [salesByDoctor, companyTotalResult] = await Promise.all([
+  const [salesByDoctorLocation, companyTotalResult] = await Promise.all([
     SalesOrder.aggregate([
       { $match: { stockApplied: true, referringDoctor: { $ne: null } } },
-      { $group: { _id: '$referringDoctor', totalSales: { $sum: '$grandTotal' }, orderCount: { $sum: 1 } } },
+      {
+        $group: {
+          _id: { doctor: '$referringDoctor', location: { $ifNull: ['$referralLocation', 'Unspecified'] } },
+          totalSales: { $sum: '$grandTotal' },
+          orderCount: { $sum: 1 },
+        },
+      },
     ]),
     SalesOrder.aggregate([{ $match: { stockApplied: true } }, { $group: { _id: null, total: { $sum: '$grandTotal' } } }]),
   ]);
-  const salesById = new Map(salesByDoctor.map((r) => [String(r._id), r]));
   const totalCompanySales = companyTotalResult[0]?.total || 0;
+
+  const salesById = new Map();
+  for (const r of salesByDoctorLocation) {
+    const key = String(r._id.doctor);
+    if (!salesById.has(key)) salesById.set(key, { totalSales: 0, orderCount: 0, byLocation: [] });
+    const agg = salesById.get(key);
+    agg.totalSales += r.totalSales;
+    agg.orderCount += r.orderCount;
+    agg.byLocation.push({ location: r._id.location, totalSales: r.totalSales, orderCount: r.orderCount });
+  }
+  salesById.forEach((agg) => agg.byLocation.sort((a, b) => b.totalSales - a.totalSales));
 
   const doctors = await Doctor.find({ _id: { $in: [...salesById.keys()] } });
 
@@ -213,6 +236,7 @@ const getDoctorCommissions = asyncHandler(async (req, res) => {
       incentiveType: doctor.incentiveType,
       totalSales: sales.totalSales,
       orderCount: sales.orderCount,
+      byLocation: sales.byLocation,
       commissionPercent: doctor.commissionPercent,
       discountPercent: doctor.discountPercent,
       commissionEarned,

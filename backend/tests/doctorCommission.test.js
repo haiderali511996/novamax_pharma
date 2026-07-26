@@ -265,4 +265,59 @@ describe('Doctor commission and cascading discount pricing', () => {
     expect(dashboard.body.data.doctorReferredSalesPercent).toBe(100);
     expect(dashboard.body.data.topDoctor.name).toBe('Dr. Dashboard');
   });
+
+  test('a doctor referring business from two different locations in one day rolls up under one commission total, broken down per location', async () => {
+    const { token } = await registerUser();
+    const warehouse = await createWarehouse(token);
+    const product = await createProduct(token, { sellingPrice: 100 });
+    const customer = await createCustomer(token);
+    await createBatch(token, { product: product._id, warehouse: warehouse._id, quantity: 2000 });
+
+    const doctor = await request(app)
+      .post('/api/doctors')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Dr. Multi-Site', incentiveType: 'cash_commission', commissionPercent: 20 });
+
+    async function placeOrder(orderNumber, referralLocation) {
+      const order = await request(app)
+        .post('/api/sales-orders')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          orderNumber,
+          customer: customer._id,
+          warehouse: warehouse._id,
+          referringDoctor: doctor.body.data._id,
+          referralLocation,
+          items: [{ product: product._id, quantity: 1000, unitPrice: 100, taxRate: 0, total: 100000 }],
+          subTotal: 100000,
+          grandTotal: 100000,
+        });
+      await request(app).post(`/api/sales-orders/${order.body.data._id}/confirm`).set('Authorization', `Bearer ${token}`);
+      await request(app).post(`/api/sales-orders/${order.body.data._id}/generate-invoice`).set('Authorization', `Bearer ${token}`);
+    }
+
+    // Morning at the hospital: 1 Lac. Evening at the clinic: another 1 Lac.
+    await placeOrder('SO-MULTISITE-1', 'Nawazsharif Medical Complex');
+    await placeOrder('SO-MULTISITE-2', 'City Clinic (Evening)');
+
+    const report = await request(app).get('/api/reports/doctor-commissions').set('Authorization', `Bearer ${token}`);
+    const row = report.body.data.rows.find((r) => r.doctor === 'Dr. Multi-Site');
+
+    // Same doctor, same 20% - the two locations combine into ONE total, not two separate doctors.
+    expect(row.totalSales).toBe(200000);
+    expect(row.commissionEarned).toBe(40000);
+    expect(row.orderCount).toBe(2);
+
+    // But the breakdown still shows exactly where each half came from.
+    expect(row.byLocation).toHaveLength(2);
+    const byLocation = Object.fromEntries(row.byLocation.map((l) => [l.location, l.totalSales]));
+    expect(byLocation['Nawazsharif Medical Complex']).toBe(100000);
+    expect(byLocation['City Clinic (Evening)']).toBe(100000);
+
+    // The doctor's ledger also shows the combined 40,000 owed, not two separate 20,000 entries per doctor.
+    const ledger = await request(app)
+      .get(`/api/ledger-entries/statement?partyType=doctor&party=${doctor.body.data._id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(ledger.body.data.closingBalance).toBe(40000);
+  });
 });

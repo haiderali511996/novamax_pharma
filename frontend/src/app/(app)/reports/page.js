@@ -136,6 +136,22 @@ function DoctorCommissionsReport({ data }) {
           },
           { key: 'orderCount', label: 'Orders' },
           { key: 'totalSales', label: 'Sales Referred', render: (r) => `$${r.totalSales.toFixed(2)}` },
+          {
+            key: 'byLocation',
+            label: 'By Location',
+            render: (r) =>
+              r.byLocation?.length > 1 ? (
+                <div className="space-y-0.5 text-xs">
+                  {r.byLocation.map((l) => (
+                    <div key={l.location}>
+                      {l.location}: ${l.totalSales.toFixed(0)}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                r.byLocation?.[0]?.location || '—'
+              ),
+          },
           { key: 'salesSharePercent', label: '% of Company Sales', render: (r) => `${r.salesSharePercent}%` },
           { key: 'commissionEarned', label: 'Commission Earned', render: (r) => `$${r.commissionEarned.toFixed(2)}` },
           { key: 'commissionPaid', label: 'Commission Paid', render: (r) => `$${r.commissionPaid.toFixed(2)}` },

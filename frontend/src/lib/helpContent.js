@@ -174,6 +174,15 @@ export const HELP_SECTIONS = [
         ],
       },
       {
+        heading: 'A doctor with multiple locations (e.g. hospital in the morning, clinic in the evening)',
+        body: [
+          'Some doctors refer business from more than one place in the same day - say, "Nawazsharif Medical Complex" in the morning and a private clinic in the evening.',
+          'This is still ONE doctor record with ONE commission rate. When you create each Sales Order, fill in the "Referral Location" field with wherever that particular referral happened - the doctor field stays the same.',
+          'Their commission is calculated on the combined total from every location, not per location - e.g. 1 Lac from the hospital + 1 Lac from the clinic = 2 Lac combined, and a 20% doctor earns 40K total, not two separate 20K entries.',
+          'The Doctor Commissions report still shows you the split by location (a "By Location" column) so you know exactly how much came from where, without it affecting the doctor\'s single running commission balance.',
+        ],
+      },
+      {
         heading: 'Getting paid: the Doctor Commission Ledger',
         image: 'ledgers-doctors.png',
         body: [

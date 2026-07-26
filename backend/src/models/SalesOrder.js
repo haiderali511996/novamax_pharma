@@ -23,6 +23,12 @@ const salesOrderSchema = new mongoose.Schema(
     // cash-commission ledger posting (see salesOrderController) or the
     // product-discount cascade already baked into the line item prices.
     referringDoctor: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' },
+    // Free-text: where the referral happened (e.g. "Nawazsharif Medical
+    // Complex" in the morning vs. "City Clinic" in the evening). A doctor
+    // sitting at multiple places in a day still rolls up under ONE doctor
+    // record and ONE commission total - this just lets reports break that
+    // total down by location without splitting the doctor's identity.
+    referralLocation: { type: String, trim: true },
     items: { type: [lineItemSchema], validate: (v) => v.length > 0 },
     subTotal: { type: Number, required: true, min: 0 },
     taxTotal: { type: Number, min: 0, default: 0 },
