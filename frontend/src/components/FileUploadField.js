@@ -29,6 +29,7 @@ export default function FileUploadField({ field, value, onChange }) {
   return (
     <div>
       <input
+        id={field.name}
         type="file"
         onChange={handleFileChange}
         disabled={uploading}

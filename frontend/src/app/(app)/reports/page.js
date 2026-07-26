@@ -202,7 +202,15 @@ export default function ReportsPage() {
         {REPORTS.map((r) => (
           <button
             key={r.key}
-            onClick={() => setActive(r.key)}
+            onClick={() => {
+              // Reset data/loading in the same batch as the tab switch, so
+              // the very next render never pairs the new tab's Renderer
+              // with the previous tab's (structurally different) data.
+              setData(null);
+              setLoading(true);
+              setError('');
+              setActive(r.key);
+            }}
             className={`rounded-md px-3 py-1.5 text-sm ${
               active === r.key ? 'bg-emerald-600 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
             }`}

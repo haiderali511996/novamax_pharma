@@ -37,6 +37,7 @@ function AsyncSelectField({ field, value, onChange, formData }) {
 
   return (
     <select
+      id={field.name}
       required={field.required}
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
@@ -111,6 +112,7 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   if (field.type === 'select') {
     return (
       <select
+        id={field.name}
         required={field.required}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
@@ -132,6 +134,7 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   if (field.type === 'json') {
     return (
       <textarea
+        id={field.name}
         required={field.required}
         value={typeof value === 'string' ? value : JSON.stringify(value ?? [], null, 2)}
         onChange={(e) => onChange(e.target.value)}
@@ -144,6 +147,7 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   if (field.type === 'textarea') {
     return (
       <textarea
+        id={field.name}
         required={field.required}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
@@ -155,6 +159,7 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   if (field.type === 'checkbox') {
     return (
       <input
+        id={field.name}
         type="checkbox"
         checked={!!value}
         onChange={(e) => onChange(e.target.checked)}
@@ -164,6 +169,7 @@ function FormField({ field, value, onChange, onBulkChange, formData }) {
   }
   return (
     <input
+      id={field.name}
       type={field.type || 'text'}
       required={field.required}
       value={value ?? ''}
@@ -390,7 +396,7 @@ export default function ResourceManager({
                 .filter((f) => !f.computed)
                 .map((f) => (
                   <div key={f.name} className={f.type === 'checkbox' ? 'flex items-center gap-2' : ''}>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label htmlFor={f.name} className="mb-1 block text-sm font-medium text-slate-700">
                       {f.label}
                       {f.required && <span className="text-red-500"> *</span>}
                     </label>

@@ -194,8 +194,9 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
             <h2 className="mb-4 text-lg font-bold text-slate-800">Add Ledger Entry</h2>
             <form onSubmit={handleAddEntry} className="space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Entry Type</label>
+                <label htmlFor="ledger-entry-type" className="mb-1 block text-sm font-medium text-slate-700">Entry Type</label>
                 <select
+                  id="ledger-entry-type"
                   value={form.type}
                   onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
@@ -205,8 +206,9 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Amount *</label>
+                <label htmlFor="ledger-entry-amount" className="mb-1 block text-sm font-medium text-slate-700">Amount *</label>
                 <input
+                  id="ledger-entry-amount"
                   type="number"
                   step="any"
                   min="0"
@@ -217,8 +219,9 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Date</label>
+                <label htmlFor="ledger-entry-date" className="mb-1 block text-sm font-medium text-slate-700">Date</label>
                 <input
+                  id="ledger-entry-date"
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
@@ -226,8 +229,9 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Description *</label>
+                <label htmlFor="ledger-entry-description" className="mb-1 block text-sm font-medium text-slate-700">Description *</label>
                 <input
+                  id="ledger-entry-description"
                   type="text"
                   required
                   value={form.description}
@@ -236,8 +240,9 @@ export default function LedgerView({ title, partyType, partyEndpoint, partyLabel
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Reference</label>
+                <label htmlFor="ledger-entry-reference" className="mb-1 block text-sm font-medium text-slate-700">Reference</label>
                 <input
+                  id="ledger-entry-reference"
                   type="text"
                   value={form.reference}
                   onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
