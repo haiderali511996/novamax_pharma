@@ -47,6 +47,14 @@ const pricingRoutes = require('./routes/pricingRoutes');
 // connection already established) as well as from server.js for real runs.
 const app = express();
 
+// Behind a reverse proxy (nginx, or cPanel/LiteSpeed's Node app handler) in
+// production, requests arrive with an X-Forwarded-For header. Express must
+// be told to trust it (rather than treating it as untrusted-and-suspicious)
+// or express-rate-limit refuses to identify requesters and throws on every
+// request. `1` trusts exactly one hop, matching a single reverse proxy in
+// front of the app - not a public-facing Node process taking raw traffic.
+app.set('trust proxy', 1);
+
 app.use(helmet());
 // Auth uses a Bearer token, not cookies, so no credentials mode is needed;
 // that also lets CLIENT_URL default to '*' without violating CORS rules.
