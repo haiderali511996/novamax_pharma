@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ResourceManager from '@/components/ResourceManager';
 import FacilityCsvImport from '@/components/FacilityCsvImport';
+import OsmFacilitySearch from '@/components/OsmFacilitySearch';
 
 const TYPE_LABELS = {
   hospital: 'Hospital',
@@ -69,6 +70,7 @@ export default function FacilitiesPage() {
 
   return (
     <div>
+      <OsmFacilitySearch onImported={() => setRefreshKey((k) => k + 1)} />
       <FacilityCsvImport onImported={() => setRefreshKey((k) => k + 1)} />
       <ResourceManager
         key={refreshKey}

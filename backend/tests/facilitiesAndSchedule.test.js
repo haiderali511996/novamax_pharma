@@ -1,5 +1,11 @@
 const { app, request, registerUser, createCustomer } = require('./helpers/factory');
 
+jest.mock('../src/utils/osmPlaces', () => ({
+  geocodeCity: jest.fn(),
+  searchFacilitiesNear: jest.fn(),
+}));
+const { geocodeCity, searchFacilitiesNear } = require('../src/utils/osmPlaces');
+
 describe('Facility directory', () => {
   test('creates a facility and links it to a territory', async () => {
     const { token } = await registerUser();
@@ -51,6 +57,51 @@ describe('Facility directory', () => {
     // Both rows shared the same territory name - should resolve to ONE territory, not two.
     const territoryIds = new Set(list.body.data.map((f) => f.territory._id));
     expect(territoryIds.size).toBe(1);
+  });
+
+  test('OSM search geocodes the city then returns nearby named facilities (no API key/billing needed)', async () => {
+    const { token } = await registerUser();
+    geocodeCity.mockResolvedValue({ lat: 31.5656822, lon: 74.3141829 });
+    searchFacilitiesNear.mockResolvedValue([
+      {
+        osmId: 'node/1',
+        name: 'DHA Medical Center',
+        type: 'hospital',
+        address: 'St 29 Sec W Ph 3',
+        city: 'Lahore',
+        phone: '',
+        latitude: 31.4767,
+        longitude: 74.3715,
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=31.4767,74.3715',
+      },
+    ]);
+
+    const res = await request(app)
+      .get('/api/facilities/search-osm?city=Lahore&types=hospital,clinic,pharmacy')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.results).toHaveLength(1);
+    expect(res.body.data.results[0].name).toBe('DHA Medical Center');
+    expect(geocodeCity).toHaveBeenCalledWith('Lahore');
+    expect(searchFacilitiesNear).toHaveBeenCalledWith({ lat: 31.5656822, lon: 74.3141829 }, 5000, ['hospital', 'clinic', 'pharmacy']);
+  });
+
+  test('OSM search returns 404 when the city cannot be geocoded', async () => {
+    const { token } = await registerUser();
+    geocodeCity.mockRejectedValue(new Error('Could not find "Nowheresville" - check the spelling'));
+
+    const res = await request(app)
+      .get('/api/facilities/search-osm?city=Nowheresville')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  test('OSM search requires a city query param', async () => {
+    const { token } = await registerUser();
+    const res = await request(app).get('/api/facilities/search-osm').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
   });
 });
 

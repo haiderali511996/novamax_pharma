@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const Facility = require('../models/Facility');
 const Territory = require('../models/Territory');
 const { logAudit } = require('../utils/auditLogger');
+const { geocodeCity, searchFacilitiesNear } = require('../utils/osmPlaces');
 
 // @desc  Bulk-create facilities from a parsed CSV (rows parsed client-side
 //        and posted as JSON - avoids adding a CSV-parsing dependency for
@@ -67,4 +68,40 @@ const importFacilities = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: { createdCount: created.length, errors } });
 });
 
-module.exports = { importFacilities };
+// @desc  Look up real hospitals/clinics/pharmacies in a Pakistani city from
+//        OpenStreetMap (free, no API key/billing - unlike Google Places,
+//        OSM's ODbL license explicitly allows pulling results like this
+//        into your own database). Returns candidates only; nothing is
+//        saved until the caller picks which ones to import.
+// @route GET /api/facilities/search-osm?city=Lahore&types=hospital,clinic,pharmacy&radiusKm=5
+const searchOsmFacilities = asyncHandler(async (req, res) => {
+  const { city, types, radiusKm } = req.query;
+  if (!city) {
+    res.status(400);
+    throw new Error('city is required');
+  }
+  const typeList = (types ? types.split(',') : ['hospital', 'clinic', 'pharmacy']).map((t) => t.trim());
+  // Capped at 15km - a radius search keeps this fast even for a huge metro
+  // area like Karachi, where a full administrative-boundary query times out.
+  const radiusMeters = Math.min(Number(radiusKm) || 5, 15) * 1000;
+
+  let center;
+  try {
+    center = await geocodeCity(city);
+  } catch (err) {
+    res.status(404);
+    throw err;
+  }
+
+  let results;
+  try {
+    results = await searchFacilitiesNear(center, radiusMeters, typeList);
+  } catch (err) {
+    res.status(502);
+    throw new Error(`OpenStreetMap lookup failed: ${err.message}`);
+  }
+
+  res.json({ success: true, data: { results, attribution: 'Data © OpenStreetMap contributors, ODbL 1.0 (openstreetmap.org/copyright)' } });
+});
+
+module.exports = { importFacilities, searchOsmFacilities };
